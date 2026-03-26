@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+panel/node_modules/
+
+# Build outputs
+dist/
+panel/.next/
+panel/out/
+
+# Environment files — NUNCA subir a git
+.env
+.env.local
+panel/.env.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code settings (local)
+.claude/
+
+# TypeScript
+*.tsbuildinfo
+
+# Next.js
+panel/.next/
+panel/out/
+ignored

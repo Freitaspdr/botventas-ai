@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:v1.8.2
+    container_name: evolution-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # ── Seguridad ──────────────────────────────────────────────
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: "botventas-local-key"
+
+      # ── Almacenamiento (archivo local — más simple para desarrollo) ──
+      STORE_MESSAGES: "true"
+      STORE_MESSAGE_UP: "true"
+      STORE_CONTACTS: "true"
+
+      # ── Webhook ────────────────────────────────────────────────
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      WEBHOOK_GLOBAL_URL: ""
+
+      # ── General ────────────────────────────────────────────────
+      SERVER_PORT: "8080"
+      LANGUAGE: es
+      LOG_LEVEL: ERROR
+      DEL_INSTANCE: "false"
+
+    volumes:
+      - evolution_data:/evolution/instances
+      - evolution_store:/evolution/store
+
+volumes:
+  evolution_data:
+  evolution_store:
