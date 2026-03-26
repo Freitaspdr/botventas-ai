@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { rows } = await pool.query(
-    `SELECT id, cliente_nombre, servicio, vehiculo, fecha_hora, estado, google_event_url
-     FROM citas
-     WHERE empresa_id = $1 AND fecha_hora >= NOW() AND estado != 'cancelada'
-     ORDER BY fecha_hora ASC
-     LIMIT 3`,
-    [session.user.empresaId],
-  );
+  const { data, error } = await supabase
+    .from('citas')
+    .select('id, cliente_nombre, servicio, vehiculo, fecha_hora, estado, google_event_url')
+    .eq('empresa_id', session.user.empresaId)
+    .gte('fecha_hora', new Date().toISOString())
+    .neq('estado', 'cancelada')
+    .order('fecha_hora', { ascending: true })
+    .limit(3);
 
-  return NextResponse.json(rows);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
 }

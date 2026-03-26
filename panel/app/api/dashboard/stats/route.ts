@@ -1,66 +1,38 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const empresaId = session.user.empresaId;
   const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase.rpc('get_dashboard_stats', {
+    p_empresa_id: session.user.empresaId,
+    p_today: today,
+  });
 
-  const { rows } = await pool.query<{
-    conv_hoy: string;
-    conv_ayer: string;
-    hot_leads_hoy: string;
-    hot_leads_ayer: string;
-    citas_hoy: string;
-    citas_hoy_confirmadas: string;
-    citas_hoy_pendientes: string;
-    total_leads: string;
-    leads_cerrados: string;
-    conv_total: string;
-    conv_transfer: string;
-  }>(
-    `SELECT
-      (SELECT COUNT(*) FROM conversaciones WHERE empresa_id=$1 AND DATE(creado_en)=$2) AS conv_hoy,
-      (SELECT COUNT(*) FROM conversaciones WHERE empresa_id=$1 AND DATE(creado_en)=$2::date - 1) AS conv_ayer,
-      (SELECT COUNT(*) FROM leads WHERE empresa_id=$1 AND nivel='alto' AND DATE(creado_en)=$2) AS hot_leads_hoy,
-      (SELECT COUNT(*) FROM leads WHERE empresa_id=$1 AND nivel='alto' AND DATE(creado_en)=$2::date - 1) AS hot_leads_ayer,
-      (SELECT COUNT(*) FROM citas WHERE empresa_id=$1 AND DATE(fecha_hora)=$2) AS citas_hoy,
-      (SELECT COUNT(*) FROM citas WHERE empresa_id=$1 AND DATE(fecha_hora)=$2 AND estado='confirmada') AS citas_hoy_confirmadas,
-      (SELECT COUNT(*) FROM citas WHERE empresa_id=$1 AND DATE(fecha_hora)=$2 AND estado='pendiente') AS citas_hoy_pendientes,
-      (SELECT COUNT(*) FROM leads WHERE empresa_id=$1) AS total_leads,
-      (SELECT COUNT(*) FROM leads WHERE empresa_id=$1 AND estado='cerrado') AS leads_cerrados,
-      (SELECT COUNT(*) FROM conversaciones WHERE empresa_id=$1) AS conv_total,
-      (SELECT COUNT(*) FROM conversaciones WHERE empresa_id=$1 AND estado='transferida') AS conv_transfer`,
-    [empresaId, today],
-  );
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const r = rows[0];
-  const convHoy = Number(r.conv_hoy);
-  const convAyer = Number(r.conv_ayer);
-  const hotHoy = Number(r.hot_leads_hoy);
-  const hotAyer = Number(r.hot_leads_ayer);
+  const r = data as Record<string, number>;
+  const convHoy    = Number(r.conv_hoy);
+  const convAyer   = Number(r.conv_ayer);
+  const hotHoy     = Number(r.hot_leads_hoy);
+  const hotAyer    = Number(r.hot_leads_ayer);
   const totalLeads = Number(r.total_leads);
-  const leadsCerrados = Number(r.leads_cerrados);
-  const convTotal = Number(r.conv_total);
-  const convTransfer = Number(r.conv_transfer);
-
-  const convTrend = convAyer > 0 ? Math.round(((convHoy - convAyer) / convAyer) * 100) : 0;
-  const hotTrend = hotAyer > 0 ? Math.round(((hotHoy - hotAyer) / hotAyer) * 100) : 0;
-  const conversion = totalLeads > 0 ? Math.round((leadsCerrados / totalLeads) * 100) : 0;
-  const tasaBot = convTotal > 0 ? Math.round(((convTotal - convTransfer) / convTotal) * 100) : 100;
+  const cerrados   = Number(r.leads_cerrados);
+  const convTotal  = Number(r.conv_total);
+  const transfer   = Number(r.conv_transfer);
 
   return NextResponse.json({
-    conversaciones: { value: convHoy, trend: convTrend },
-    hotLeads: { value: hotHoy, trend: hotTrend },
+    conversaciones: { value: convHoy, trend: convAyer > 0 ? Math.round(((convHoy - convAyer) / convAyer) * 100) : 0 },
+    hotLeads:       { value: hotHoy,  trend: hotAyer  > 0 ? Math.round(((hotHoy  - hotAyer)  / hotAyer)  * 100) : 0 },
     citasHoy: {
-      value: Number(r.citas_hoy),
-      confirmadas: Number(r.citas_hoy_confirmadas),
-      pendientes: Number(r.citas_hoy_pendientes),
+      value:       Number(r.citas_hoy),
+      confirmadas: Number(r.citas_hoy_conf),
+      pendientes:  Number(r.citas_hoy_pend),
     },
-    conversion: { value: conversion },
-    tasaBot: { value: tasaBot },
+    conversion: { value: totalLeads > 0 ? Math.round((cerrados / totalLeads) * 100) : 0 },
+    tasaBot:    { value: convTotal  > 0 ? Math.round(((convTotal - transfer) / convTotal) * 100) : 100 },
   });
 }

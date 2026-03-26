@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -10,35 +10,30 @@ export async function GET(req: NextRequest) {
   const nivel  = searchParams.get('nivel');
   const estado = searchParams.get('estado');
 
-  const conditions: string[] = ['empresa_id = $1'];
-  const values: unknown[]    = [session.user.empresaId];
-  let idx = 2;
+  const { data, error } = await supabase.rpc('get_leads_export', {
+    p_empresa_id: session.user.empresaId,
+    p_nivel:  nivel  ?? null,
+    p_estado: estado ?? null,
+  });
 
-  if (nivel)  { conditions.push(`nivel = $${idx++}`);  values.push(nivel); }
-  if (estado) { conditions.push(`estado = $${idx++}`); values.push(estado); }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { rows } = await pool.query(
-    `SELECT cliente_nombre, cliente_tel, nivel, estado, interes, notas, creado_en
-     FROM leads WHERE ${conditions.join(' AND ')}
-     ORDER BY creado_en DESC`,
-    values,
-  );
-
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
   const headers = ['Nombre', 'Teléfono', 'Nivel', 'Estado', 'Interés', 'Notas', 'Fecha'];
   const csvLines = [
     headers.join(';'),
     ...rows.map((r) => [
-      escapeCsv(r.cliente_nombre ?? ''),
-      escapeCsv(r.cliente_tel    ?? ''),
-      escapeCsv(r.nivel          ?? ''),
-      escapeCsv(r.estado         ?? ''),
-      escapeCsv(r.interes        ?? ''),
-      escapeCsv(r.notas          ?? ''),
-      escapeCsv(new Date(r.creado_en).toLocaleString('es-ES')),
+      escapeCsv(String(r.cliente_nombre ?? '')),
+      escapeCsv(String(r.cliente_tel    ?? '')),
+      escapeCsv(String(r.nivel          ?? '')),
+      escapeCsv(String(r.estado         ?? '')),
+      escapeCsv(String(r.interes        ?? '')),
+      escapeCsv(String(r.notas          ?? '')),
+      escapeCsv(new Date(String(r.creado_en)).toLocaleString('es-ES')),
     ].join(';')),
   ];
 
-  const csv  = '\uFEFF' + csvLines.join('\r\n'); // BOM para Excel en Windows
+  const csv   = '\uFEFF' + csvLines.join('\r\n');
   const fecha = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(csv, {

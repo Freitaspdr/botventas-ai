@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 import { isUUID } from '@/lib/utils';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -10,35 +10,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!isUUID(id)) return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
 
-  const [{ rows: convRows }, { rows: mensajes }, { rows: leadRows }, { rows: citaRows }] =
-    await Promise.all([
-      pool.query(
-        `SELECT * FROM conversaciones WHERE id = $1 AND empresa_id = $2`,
-        [id, session.user.empresaId],
-      ),
-      pool.query(
-        `SELECT rol, contenido, enviado_en FROM mensajes WHERE conv_id = $1 ORDER BY enviado_en ASC`,
-        [id],
-      ),
-      pool.query(
-        `SELECT id, nivel, estado, interes, notas, score, ticket_estimado, vehiculo, creado_en
-         FROM leads WHERE conv_id = $1`,
-        [id],
-      ),
-      pool.query(
-        `SELECT id, servicio, fecha_hora, estado FROM citas WHERE conv_id = $1 ORDER BY fecha_hora DESC LIMIT 1`,
-        [id],
-      ),
-    ]);
-
-  if (!convRows[0]) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  return NextResponse.json({
-    conversacion: convRows[0],
-    mensajes,
-    lead: leadRows[0] ?? null,
-    cita: citaRows[0] ?? null,
+  const { data, error } = await supabase.rpc('get_conversacion_detalle', {
+    p_id: id,
+    p_empresa_id: session.user.empresaId,
   });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data?.conversacion) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  return NextResponse.json(data);
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -49,15 +29,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!isUUID(id)) return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
 
   const { estado } = await req.json();
-
   const allowed = ['activa', 'cerrada', 'transferida'];
   if (!allowed.includes(estado)) return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
 
-  const { rows } = await pool.query(
-    `UPDATE conversaciones SET estado=$1, actualizada_en=NOW() WHERE id=$2 AND empresa_id=$3 RETURNING *`,
-    [estado, id, session.user.empresaId],
-  );
+  const { data, error } = await supabase
+    .from('conversaciones')
+    .update({ estado, actualizada_en: new Date().toISOString() })
+    .eq('id', id)
+    .eq('empresa_id', session.user.empresaId)
+    .select()
+    .single();
 
-  if (!rows[0]) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(rows[0]);
+  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  return NextResponse.json(data);
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 import { isUUID } from '@/lib/utils';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,15 +11,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!isUUID(id)) return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
 
   const { estado } = await req.json();
-
   const allowed = ['pendiente', 'confirmada', 'cancelada', 'completada', 'no_show'];
   if (!allowed.includes(estado)) return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
 
-  const { rows } = await pool.query(
-    `UPDATE citas SET estado = $1 WHERE id = $2 AND empresa_id = $3 RETURNING *`,
-    [estado, id, session.user.empresaId],
-  );
+  const { data, error } = await supabase
+    .from('citas')
+    .update({ estado })
+    .eq('id', id)
+    .eq('empresa_id', session.user.empresaId)
+    .select()
+    .single();
 
-  if (!rows[0]) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(rows[0]);
+  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  return NextResponse.json(data);
 }

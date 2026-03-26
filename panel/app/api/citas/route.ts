@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import pool from '@/lib/pool';
+import supabase from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -10,19 +10,18 @@ export async function GET(req: NextRequest) {
   const desde = searchParams.get('desde');
   const hasta = searchParams.get('hasta');
 
-  const conditions = ['empresa_id = $1'];
-  const values: unknown[] = [session.user.empresaId];
-  let idx = 2;
+  let query = supabase
+    .from('citas')
+    .select('*')
+    .eq('empresa_id', session.user.empresaId)
+    .order('fecha_hora', { ascending: true });
 
-  if (desde) { conditions.push(`fecha_hora >= $${idx++}`); values.push(desde); }
-  if (hasta) { conditions.push(`fecha_hora <= $${idx++}`); values.push(hasta + 'T23:59:59'); }
+  if (desde) query = query.gte('fecha_hora', desde);
+  if (hasta) query = query.lte('fecha_hora', hasta + 'T23:59:59');
 
-  const { rows } = await pool.query(
-    `SELECT * FROM citas WHERE ${conditions.join(' AND ')} ORDER BY fecha_hora ASC`,
-    values,
-  );
-
-  return NextResponse.json(rows);
+  const { data, error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(req: NextRequest) {
@@ -34,13 +33,22 @@ export async function POST(req: NextRequest) {
 
   if (!cliente_tel || !fecha_hora) return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
 
-  const { rows } = await pool.query(
-    `INSERT INTO citas (empresa_id, conv_id, cliente_tel, cliente_nombre, servicio, vehiculo, fecha_hora, notas, estado)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente')
-     RETURNING *`,
-    [session.user.empresaId, conv_id ?? null, cliente_tel, cliente_nombre ?? null,
-     servicio ?? null, vehiculo ?? null, fecha_hora, notas ?? null],
-  );
+  const { data, error } = await supabase
+    .from('citas')
+    .insert({
+      empresa_id:     session.user.empresaId,
+      conv_id:        conv_id ?? null,
+      cliente_tel,
+      cliente_nombre: cliente_nombre ?? null,
+      servicio:       servicio ?? null,
+      vehiculo:       vehiculo ?? null,
+      fecha_hora,
+      notas:          notas ?? null,
+      estado:         'pendiente',
+    })
+    .select()
+    .single();
 
-  return NextResponse.json(rows[0], { status: 201 });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }
