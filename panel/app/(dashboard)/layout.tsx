@@ -1,9 +1,10 @@
 import { TopBar } from '@/components/top-bar';
 import { SidebarWrapper } from '@/components/sidebar-wrapper';
+import { SidebarProvider } from '@/components/sidebar-context';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <SidebarProvider>
       {/* Top bar fija, z-40 */}
       <TopBar />
 
@@ -23,6 +24,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
       </main>
-    </>
+    </SidebarProvider>
   );
 }

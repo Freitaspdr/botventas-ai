@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import pool from '@/lib/pool';
 import { Bell } from 'lucide-react';
 import { LogoutButton } from './logout-button';
+import { SidebarToggle } from './sidebar-toggle';
 
 async function getEmpresaNombre(empresaId: string): Promise<string> {
   try {
@@ -43,8 +44,11 @@ export async function TopBar() {
         backdropFilter: 'blur(12px)',
       }}
     >
-      {/* Izquierda: logo + empresa */}
+      {/* Izquierda: hamburger + logo + empresa */}
       <div className="flex items-center gap-3">
+        {/* Hamburger toggle */}
+        <SidebarToggle />
+
         {/* Logo */}
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -76,7 +80,7 @@ export async function TopBar() {
         <span className="text-[12px] text-[#a1a1aa]">{empresaNombre}</span>
       </div>
 
-      {/* Derecha: campana + avatar */}
+      {/* Derecha: campana + avatar + logout */}
       <div className="flex items-center gap-3">
         {/* Campana */}
         <button
@@ -84,7 +88,6 @@ export async function TopBar() {
           title="Notificaciones"
         >
           <Bell size={14} className="text-[#a1a1aa]" strokeWidth={1.5} />
-          {/* Punto rojo — siempre visible por ahora */}
           <span
             className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
             style={{ background: '#ef4444' }}

@@ -11,6 +11,7 @@ import {
   Settings2,
   Shield,
 } from 'lucide-react';
+import { useSidebar } from './sidebar-context';
 
 const NAV_ITEMS = [
   { href: '/',               icon: LayoutGrid,   label: 'Dashboard' },
@@ -29,11 +30,13 @@ function NavItem({
   icon: Icon,
   label,
   dot,
+  expanded,
 }: {
   href: string;
   icon: React.ElementType;
   label: string;
   dot?: boolean;
+  expanded: boolean;
 }) {
   const pathname = usePathname();
   const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -41,52 +44,76 @@ function NavItem({
   return (
     <Link
       href={href}
-      title={label}
+      title={expanded ? undefined : label}
       className={`
-        relative flex items-center justify-center w-9 h-9 rounded-[10px] transition-colors
-        ${isActive
-          ? 'bg-green-500/10'
-          : 'hover:bg-white/[0.04]'}
+        relative flex items-center gap-2.5 rounded-[10px] transition-all duration-200
+        ${expanded ? 'w-full px-2.5 py-2' : 'w-9 h-9 justify-center'}
+        ${isActive ? 'bg-green-500/10' : 'hover:bg-white/[0.04]'}
       `}
     >
       <Icon
         size={16}
-        className={isActive ? 'text-[#4ade80]' : 'text-[#a1a1aa]'}
+        className={`flex-shrink-0 ${isActive ? 'text-[#4ade80]' : 'text-[#a1a1aa]'}`}
         strokeWidth={1.5}
       />
+      {expanded && (
+        <span
+          className="text-[12px] truncate"
+          style={{ color: isActive ? '#e4e4e7' : '#a1a1aa' }}
+        >
+          {label}
+        </span>
+      )}
       {dot && !isActive && (
-        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+        <span className={`absolute w-1.5 h-1.5 rounded-full bg-[#22c55e] ${expanded ? 'right-2.5 top-1/2 -translate-y-1/2' : 'top-1.5 right-1.5'}`} />
       )}
     </Link>
   );
 }
 
 export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
-  return (
-    <aside
-      className="fixed left-0 top-11 bottom-0 z-30 flex flex-col items-center py-2 gap-0.5"
-      style={{ width: 56, borderRight: '0.5px solid rgba(255,255,255,0.05)' }}
-    >
-      {/* Nav principal */}
-      <nav className="flex flex-col items-center gap-0.5 flex-1 w-full px-2.5 pt-2">
-        {NAV_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} />
-        ))}
-        {isSuperAdmin && (
-          <NavItem href="/admin" icon={Shield} label="Admin" />
-        )}
-      </nav>
+  const { open } = useSidebar();
 
-      {/* Separador + Config */}
-      <div className="flex flex-col items-center gap-0.5 w-full px-2.5 pb-2">
+  return (
+    <>
+      {/* Backdrop when open */}
+      {open && (
         <div
-          className="w-7 mb-1"
-          style={{ height: '0.5px', background: 'rgba(255,255,255,0.05)' }}
+          className="fixed inset-0 z-20"
+          style={{ top: 44 }}
         />
-        {BOTTOM_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} />
-        ))}
-      </div>
-    </aside>
+      )}
+
+      <aside
+        className="fixed left-0 top-11 bottom-0 z-30 flex flex-col py-2 gap-0.5 transition-all duration-200"
+        style={{
+          width: open ? 200 : 56,
+          borderRight: '0.5px solid rgba(255,255,255,0.05)',
+          background: '#09090b',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Nav principal */}
+        <nav className={`flex flex-col gap-0.5 flex-1 w-full pt-2 ${open ? 'px-2' : 'items-center px-2.5'}`}>
+          {NAV_ITEMS.map((item) => (
+            <NavItem key={item.href} {...item} expanded={open} />
+          ))}
+          {isSuperAdmin && (
+            <NavItem href="/admin" icon={Shield} label="Admin" expanded={open} />
+          )}
+        </nav>
+
+        {/* Separador + Config */}
+        <div className={`flex flex-col gap-0.5 w-full pb-2 ${open ? 'px-2' : 'items-center px-2.5'}`}>
+          <div
+            className="mb-1"
+            style={{ height: '0.5px', background: 'rgba(255,255,255,0.05)', margin: open ? '0 8px 4px' : '0 auto 4px', width: open ? 'calc(100% - 16px)' : 28 }}
+          />
+          {BOTTOM_ITEMS.map((item) => (
+            <NavItem key={item.href} {...item} expanded={open} />
+          ))}
+        </div>
+      </aside>
+    </>
   );
 }
