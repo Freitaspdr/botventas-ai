@@ -29,6 +29,26 @@ import { env } from '../config/env';
 
 export const webhookRouter = Router();
 
+// ─── Debounce de mensajes ──────────────────────────────────────────────────────
+// Agrupa mensajes del mismo cliente enviados en ráfaga (ej: "¿cuánto cuesta?" + "jajaja")
+// Espera DEBOUNCE_MS tras el último mensaje antes de llamar a Claude.
+
+const DEBOUNCE_MS = 4500; // ms de espera tras el último mensaje del cliente
+
+interface BurstEntry {
+  timer:        NodeJS.Timeout;
+  parts:        string[];   // textos individuales recibidos en la ráfaga
+  convId:       string;
+  isNew:        boolean;    // ¿era conversación nueva cuando llegó el primer mensaje?
+  remoteJid:    string;
+  clienteTel:   string;
+  clienteNombre?: string;
+  empresa:      Empresa;
+  evoCfg:       { instance: string; url: string; key: string };
+}
+
+const pendingBursts = new Map<string, BurstEntry>();
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 webhookRouter.get('/webhook', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -69,18 +89,26 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
   if (payload.data.key.fromMe) return;
   if (payload.data.key.remoteJid.endsWith('@g.us')) return; // ignorar grupos
 
-  const remoteJid  = payload.data.key.remoteJid;          // JID completo (puede ser @lid)
-  const clienteTel = extractPhone(remoteJid);               // Solo para BD
+  const remoteJid     = payload.data.key.remoteJid;
+  const clienteTel    = extractPhone(remoteJid);
   const clienteNombre = payload.data.pushName;
-  const messageText = extractMessageText(payload);
+  const messageText   = extractMessageText(payload);
 
   if (!messageText?.trim()) return;
+
+  // Modo test: ignorar cualquier número que no esté en la whitelist
+  if (env.TEST_WHITELIST) {
+    const allowed = env.TEST_WHITELIST.split(',').map(n => n.trim());
+    if (!allowed.includes(clienteTel)) {
+      console.log(`🔒 [TEST MODE] Ignorado: ${clienteTel}`);
+      return;
+    }
+  }
 
   console.log(`📩 [${payload.instance}] ${clienteTel}: ${messageText}`);
 
   try {
-    // 1. Busca la empresa por el nombre de instancia del webhook (multi-tenant)
-    //    Fallback: usa EVOLUTION_INSTANCE del .env para compatibilidad legacy
+    // 1. Busca la empresa
     const empresa = await getEmpresaByInstance(payload.instance)
       ?? await getEmpresaByWhatsapp(env.EVOLUTION_INSTANCE);
 
@@ -89,7 +117,7 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
       return;
     }
 
-    // 2. Resuelve config Evolution API de esta empresa (con fallback al .env)
+    // 2. Config Evolution API
     const evoCfg = await getEvolutionConfigForEmpresa(empresa.id);
 
     // 3. Verifica límite del plan
@@ -103,33 +131,75 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
       return;
     }
 
-    // 3. Obtiene o crea la conversación
+    // 4. Obtiene o crea la conversación
     const { conv, isNew } = await getOrCreateConversacion(empresa.id, clienteTel, clienteNombre);
 
-    // Si ya fue transferida a humano, no respondemos automáticamente
     if (conv.estado === 'transferida') {
       console.log(`👤 Conversación ${conv.id} ya transferida a humano, ignorando.`);
       return;
     }
 
-    // 4. Guarda mensaje del cliente
+    // 5. Guarda el mensaje en BD inmediatamente (para no perderlo)
     await saveMessage(conv.id, 'user', messageText);
 
-    // Si el lead estaba en nurturing y responde, resetear nurturing
-    if (!isNew) {
-      await resetNurturing(conv.id);
+    if (!isNew) await resetNurturing(conv.id);
+
+    // 6. Debounce: acumular mensajes del mismo cliente y esperar DEBOUNCE_MS
+    const burstKey = `${empresa.id}:${clienteTel}`;
+    const existing = pendingBursts.get(burstKey);
+
+    if (existing) {
+      // Ya hay un timer activo → cancelarlo, añadir el nuevo texto, reiniciar timer
+      clearTimeout(existing.timer);
+      existing.parts.push(messageText);
+      console.log(`⏸️  Burst acumulado [${clienteTel}]: ${existing.parts.length} mensajes`);
     }
 
-    // 5. Recupera historial (incluye el mensaje que acabamos de guardar)
-    const history = await getHistory(conv.id);
+    const entry: BurstEntry = existing ?? {
+      parts:        [messageText],
+      convId:       conv.id,
+      isNew,
+      remoteJid,
+      clienteTel,
+      clienteNombre: clienteNombre ?? undefined,
+      empresa,
+      evoCfg,
+      timer: null as unknown as NodeJS.Timeout, // se asigna justo abajo
+    };
 
-    // Si es conversación nueva, inyectamos contexto de bienvenida al historial
-    // para que Claude sepa que debe presentarse
+    entry.timer = setTimeout(
+      () => processBurst(burstKey, entry),
+      DEBOUNCE_MS,
+    );
+
+    if (!existing) pendingBursts.set(burstKey, entry);
+
+  } catch (err) {
+    console.error('❌ Error procesando mensaje:', err);
+  }
+});
+
+// ─── Procesa el burst cuando el timer dispara ─────────────────────────────────
+async function processBurst(burstKey: string, entry: BurstEntry): Promise<void> {
+  pendingBursts.delete(burstKey);
+
+  const { parts, convId, isNew, remoteJid, clienteTel, clienteNombre, empresa, evoCfg } = entry;
+
+  // Combina todos los mensajes del burst en uno solo para Claude
+  const combinedText = parts.join('\n');
+
+  if (parts.length > 1) {
+    console.log(`🔀 Burst procesado [${clienteTel}]: ${parts.length} mensajes → "${combinedText}"`);
+  }
+
+  try {
+    // Historial excluyendo los mensajes del burst (ya guardados en BD)
+    const history = await getHistory(convId);
     const effectiveHistory = isNew
-      ? []  // sin historial previo — Claude sabrá que es el primer mensaje
-      : history.slice(0, -1); // historial sin el último (que es el mensaje actual)
+      ? []
+      : history.slice(0, -parts.length);
 
-    // 6. Llama a Claude
+    // Llama a Claude con el texto combinado
     const aiResponse = await chat(
       {
         bot_nombre:    empresa.bot_nombre,
@@ -142,24 +212,25 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
         bot_extra:     empresa.bot_extra,
       },
       effectiveHistory,
-      messageText,
+      combinedText,
     );
 
-    // 7. Guarda respuesta del bot
-    await saveMessage(conv.id, 'assistant', aiResponse.text);
+    // Guarda respuesta del bot
+    await saveMessage(convId, 'assistant', aiResponse.text);
 
-    // 8. Procesa etiquetas (HOT_LEAD, TRANSFER_HUMAN, etc.)
+    // Procesa etiquetas
+    const conv = { id: convId, empresa_id: empresa.id, cliente_tel: clienteTel, cliente_nombre: clienteNombre ?? null, estado: 'activa', es_hot_lead: false };
     await handleAiTags(conv, empresa, aiResponse.tags, clienteNombre);
 
-    // 8b. Envía notificaciones al encargado
+    // Notificaciones al encargado
     if (aiResponse.tags.includes(AI_TAGS.HOT_LEAD)) {
-      notifyHotLead(empresa, { clienteTel, clienteNombre: clienteNombre ?? undefined });
+      notifyHotLead(empresa, { clienteTel, clienteNombre });
     }
     if (aiResponse.tags.includes(AI_TAGS.TRANSFER_HUMAN)) {
-      notifyTransfer(empresa, { clienteTel, clienteNombre: clienteNombre ?? undefined, mensaje: messageText });
+      notifyTransfer(empresa, { clienteTel, clienteNombre, mensaje: combinedText });
     }
     if (isNew) {
-      notifyNewLead(empresa, { clienteTel, clienteNombre: clienteNombre ?? undefined, mensaje: messageText });
+      notifyNewLead(empresa, { clienteTel, clienteNombre, mensaje: combinedText });
     }
     if (aiResponse.tags.includes(AI_TAGS.AGENDAR_CITA)) {
       handleAgendarCita(conv, empresa, evoCfg, clienteNombre).catch(err =>
@@ -167,13 +238,12 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
       );
     }
 
-    // 9. Delay humanizado antes de responder
+    // Delay humanizado
     const { delayMs, shouldDefer } = calculateDelay(isNew);
 
     if (shouldDefer) {
-      // Fuera de horario: programar para mañana a las 9
       console.log(`🌙 Fuera de horario, respuesta diferida para las 9:00 → ${clienteTel}`);
-      await saveDeferredMessage(conv.id, clienteTel, aiResponse.text);
+      await saveDeferredMessage(convId, clienteTel, aiResponse.text);
       return;
     }
 
@@ -182,7 +252,7 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
       await sleep(delayMs);
     }
 
-    // 10. Envía respuesta por WhatsApp (fragmentada si es larga)
+    // Envía respuesta fragmentada
     const chunks = splitMessage(aiResponse.text);
     for (const chunk of chunks) {
       if (chunk.delayBeforeMs > 0) await sleep(chunk.delayBeforeMs);
@@ -192,12 +262,13 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
     console.log(
       `✅ Respondido | tokens: ${aiResponse.inputTokens}in/${aiResponse.outputTokens}out` +
       (aiResponse.tags.length ? ` | tags: ${aiResponse.tags.join(', ')}` : '') +
-      ` | delay: ${Math.round(delayMs / 1000)}s | chunks: ${chunks.length}`,
+      ` | delay: ${Math.round(delayMs / 1000)}s | chunks: ${chunks.length}` +
+      (parts.length > 1 ? ` | burst: ${parts.length} msgs` : ''),
     );
   } catch (err) {
-    console.error('❌ Error procesando mensaje:', err);
+    console.error('❌ Error en processBurst:', err);
   }
-});
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

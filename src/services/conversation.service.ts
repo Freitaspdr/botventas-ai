@@ -104,7 +104,7 @@ export async function saveMessage(
   );
 }
 
-export async function getHistory(convId: string, limit = 10): Promise<ChatMessage[]> {
+export async function getHistory(convId: string, limit = 25): Promise<ChatMessage[]> {
   const result = await db.query<{ rol: 'user' | 'assistant'; contenido: string }>(
     `SELECT rol, contenido FROM mensajes
      WHERE conv_id = $1
