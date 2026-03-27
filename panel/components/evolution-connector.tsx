@@ -272,7 +272,7 @@ export function EvolutionConnector({ instance }: Props) {
       )}
 
       {/* Refresh button when loading or disconnected */}
-      {(state === 'loading' || state === 'disconnected') && state !== 'connecting' && (
+      {(state === 'loading' || state === 'disconnected') && (
         <button
           onClick={() => { setState('loading'); checkStatus(); }}
           className="text-[11px]"
