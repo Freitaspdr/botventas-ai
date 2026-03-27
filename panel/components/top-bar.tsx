@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import pool from '@/lib/pool';
 import { Bell } from 'lucide-react';
+import { LogoutButton } from './logout-button';
 
 async function getEmpresaNombre(empresaId: string): Promise<string> {
   try {
@@ -101,6 +102,9 @@ export async function TopBar() {
         >
           {initials}
         </div>
+
+        {/* Logout */}
+        <LogoutButton />
       </div>
     </header>
   );
