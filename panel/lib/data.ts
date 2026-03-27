@@ -19,21 +19,73 @@ async function getEmpresaId(): Promise<string | null> {
 
 // ── dashboard ─────────────────────────────────────────────────────────────────
 
-export async function getDashboardStats() {
+export async function getDashboardStats(period: '7d' | 'today' | '30d' = 'today') {
   const empresaId = await getEmpresaId();
   if (!empresaId) return null;
-  const today = new Date().toISOString().slice(0, 10);
-  const { data } = await supabase.rpc('get_dashboard_stats', { p_empresa_id: empresaId, p_today: today });
-  if (!data) return null;
-  const r = data as Record<string, number>;
-  const convHoy  = Number(r.conv_hoy),  convAyer  = Number(r.conv_ayer);
-  const hotHoy   = Number(r.hot_leads_hoy), hotAyer = Number(r.hot_leads_ayer);
-  const total    = Number(r.total_leads), cerrados = Number(r.leads_cerrados);
-  const convTotal = Number(r.conv_total), transfer = Number(r.conv_transfer);
+
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+
+  if (period === 'today') {
+    const { data } = await supabase.rpc('get_dashboard_stats', { p_empresa_id: empresaId, p_today: today });
+    if (!data) return null;
+    const r = data as Record<string, number>;
+    const convHoy  = Number(r.conv_hoy),  convAyer  = Number(r.conv_ayer);
+    const hotHoy   = Number(r.hot_leads_hoy), hotAyer = Number(r.hot_leads_ayer);
+    const total    = Number(r.total_leads), cerrados = Number(r.leads_cerrados);
+    const convTotal = Number(r.conv_total), transfer = Number(r.conv_transfer);
+    return {
+      conversaciones: { value: convHoy, trend: convAyer > 0 ? Math.round(((convHoy - convAyer) / convAyer) * 100) : 0 },
+      hotLeads:       { value: hotHoy,  trend: hotAyer  > 0 ? Math.round(((hotHoy  - hotAyer)  / hotAyer)  * 100) : 0 },
+      citasHoy: { value: Number(r.citas_hoy), confirmadas: Number(r.citas_hoy_conf), pendientes: Number(r.citas_hoy_pend) },
+      conversion: { value: total > 0 ? Math.round((cerrados / total) * 100) : 0 },
+      tasaBot:    { value: convTotal > 0 ? Math.round(((convTotal - transfer) / convTotal) * 100) : 100 },
+    };
+  }
+
+  // 7d / 30d: query directly with date range
+  const days = period === '7d' ? 7 : 30;
+  const prevDays = days * 2;
+  const fromDate = new Date(now); fromDate.setDate(now.getDate() - days);
+  const prevDate = new Date(now); prevDate.setDate(now.getDate() - prevDays);
+
+  const [convRes, hotRes, leadsRes, transferRes, citasRes] = await Promise.all([
+    supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId).gte('creado_en', fromDate.toISOString()),
+    supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId).eq('es_hot_lead', true).gte('creado_en', fromDate.toISOString()),
+    supabase.from('leads').select('id, estado', { count: 'exact' })
+      .eq('empresa_id', empresaId),
+    supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId).eq('estado', 'transferida').gte('creado_en', fromDate.toISOString()),
+    supabase.from('citas').select('id, estado', { count: 'exact' })
+      .eq('empresa_id', empresaId).gte('fecha_hora', fromDate.toISOString()),
+    // previous period for trend
+    supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+      .eq('empresa_id', empresaId).gte('creado_en', prevDate.toISOString()).lt('creado_en', fromDate.toISOString()),
+  ]);
+
+  const convPrev = await supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+    .eq('empresa_id', empresaId).gte('creado_en', prevDate.toISOString()).lt('creado_en', fromDate.toISOString());
+  const hotPrev = await supabase.from('conversaciones').select('id', { count: 'exact', head: true })
+    .eq('empresa_id', empresaId).eq('es_hot_lead', true).gte('creado_en', prevDate.toISOString()).lt('creado_en', fromDate.toISOString());
+
+  const convVal  = convRes.count ?? 0;
+  const convPrevVal = convPrev.count ?? 0;
+  const hotVal   = hotRes.count ?? 0;
+  const hotPrevVal = hotPrev.count ?? 0;
+  const total    = leadsRes.count ?? 0;
+  const cerrados = (leadsRes.data ?? []).filter((l: { estado: string }) => l.estado === 'cerrado').length;
+  const convTotal = convVal;
+  const transfer = transferRes.count ?? 0;
+  const citasVal  = citasRes.count ?? 0;
+  const citasConf = (citasRes.data ?? []).filter((c: { estado: string }) => c.estado === 'confirmada').length;
+  const citasPend = (citasRes.data ?? []).filter((c: { estado: string }) => c.estado === 'pendiente').length;
+
   return {
-    conversaciones: { value: convHoy, trend: convAyer > 0 ? Math.round(((convHoy - convAyer) / convAyer) * 100) : 0 },
-    hotLeads:       { value: hotHoy,  trend: hotAyer  > 0 ? Math.round(((hotHoy  - hotAyer)  / hotAyer)  * 100) : 0 },
-    citasHoy: { value: Number(r.citas_hoy), confirmadas: Number(r.citas_hoy_conf), pendientes: Number(r.citas_hoy_pend) },
+    conversaciones: { value: convVal, trend: convPrevVal > 0 ? Math.round(((convVal - convPrevVal) / convPrevVal) * 100) : 0 },
+    hotLeads:       { value: hotVal,  trend: hotPrevVal  > 0 ? Math.round(((hotVal  - hotPrevVal)  / hotPrevVal)  * 100) : 0 },
+    citasHoy: { value: citasVal, confirmadas: citasConf, pendientes: citasPend },
     conversion: { value: total > 0 ? Math.round((cerrados / total) * 100) : 0 },
     tasaBot:    { value: convTotal > 0 ? Math.round(((convTotal - transfer) / convTotal) * 100) : 100 },
   };

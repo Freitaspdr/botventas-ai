@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { StatsCard } from '@/components/stats-card';
 import { SectionCard } from '@/components/section-card';
+import { PeriodSelector } from '@/components/period-selector';
 import { getDashboardStats, getDashboardRevenue, getDashboardFeed, getDashboardAgenda, getDashboardFunnel } from '@/lib/data';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -118,12 +119,19 @@ function IconCheck()   { return <svg width="14" height="14" viewBox="0 0 24 24" 
 
 // ── page ─────────────────────────────────────────────────────────────────────
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ p?: string }>;
+}) {
+  const { p } = await searchParams;
+  const period = (p === '7d' || p === '30d') ? p : 'today';
+
   const session = await auth();
   const userName = session?.user?.name?.split(' ')[0] ?? '';
 
   const [stats, revenue, feed, agenda, funnel] = await Promise.all([
-    getDashboardStats(),
+    getDashboardStats(period),
     getDashboardRevenue(),
     getDashboardFeed(),
     getDashboardAgenda(),
@@ -157,25 +165,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Period selector — visual only for now */}
-        <div
-          className="flex items-center rounded-lg overflow-hidden text-[11px]"
-          style={{ border: '0.5px solid rgba(255,255,255,0.05)' }}
-        >
-          {['7d', 'Hoy', '30d'].map((p, i) => (
-            <button
-              key={p}
-              className="px-3 py-1.5 transition-colors"
-              style={{
-                background: i === 1 ? 'rgba(255,255,255,0.06)' : 'transparent',
-                color:      i === 1 ? '#fafafa' : '#a1a1aa',
-                borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.05)' : undefined,
-              }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        <PeriodSelector />
       </div>
 
       {/* ── Revenue banner ── */}
