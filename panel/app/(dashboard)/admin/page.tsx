@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { createClient } from '@supabase/supabase-js';
 import { AdminForms } from '@/components/admin-forms';
+import { AdminGuide } from '@/components/admin-guide';
 import Link from 'next/link';
 
 function getSupabase() {
@@ -103,6 +104,9 @@ export default async function AdminPage() {
 
       {/* Forms */}
       <AdminForms empresas={empresas} />
+
+      {/* Guía paso a paso */}
+      <AdminGuide />
     </div>
   );
 }
