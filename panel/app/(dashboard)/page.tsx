@@ -141,7 +141,7 @@ export default async function DashboardPage() {
     { label: 'Ventas cerradas',  color: '#4ade80', ...funnel.ventas },
   ] : [];
 
-  const activeCount = feed?.filter(f => f.estado === 'activa').length ?? 0;
+  const activeCount = (feed as FeedItem[])?.filter(f => f.estado === 'activa').length ?? 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -275,7 +275,7 @@ export default async function DashboardPage() {
               </p>
             ) : (
               <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-                {feed.map((item) => {
+                {(feed as FeedItem[]).map((item) => {
                   const av = avatarStyle(item.lead_nivel, item.estado);
                   const isTransfer = item.estado === 'transferida';
                   return (
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
               </p>
             ) : (
               <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-                {agenda.map((cita) => (
+                {(agenda as AgendaItem[]).map((cita) => (
                   <div key={cita.id} className="flex items-stretch gap-3 px-3 py-2.5">
                     {/* Color bar */}
                     <div
