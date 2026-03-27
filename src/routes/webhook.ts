@@ -5,6 +5,8 @@ import {
   extractMessageText,
   sendText,
   getEvolutionConfigForEmpresa,
+  connectEvolutionInstance,
+  getEvolutionInstanceStatus,
 } from '../services/whatsapp.service';
 import {
   getEmpresaByWhatsapp,
@@ -32,6 +34,29 @@ webhookRouter.get('/webhook', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ─── Endpoints de estado/conexión de instancia (para frontend Evolution manager local) ──
+webhookRouter.get('/instance/status/:instance', async (req: Request, res: Response) => {
+  const instance = req.params.instance;
+  try {
+    const result = await getEvolutionInstanceStatus(instance);
+    res.json({ ok: true, ...result.data });
+  } catch (err: any) {
+    console.error('❌ Error getting instance status:', instance, err?.message ?? err);
+    res.status(err?.response?.status || 500).json({ ok: false, error: err?.message || 'Error interno' });
+  }
+});
+
+webhookRouter.post('/instance/connect/:instance', async (req: Request, res: Response) => {
+  const instance = req.params.instance;
+  try {
+    const result = await connectEvolutionInstance(instance);
+    res.json({ ok: true, ...result.data });
+  } catch (err: any) {
+    console.error('❌ Error connecting instance:', instance, err?.message ?? err);
+    res.status(err?.response?.status || 500).json({ ok: false, error: err?.message || 'Error interno' });
+  }
+});
+
 // ─── Webhook principal de Evolution API ───────────────────────────────────────
 webhookRouter.post('/webhook', async (req: Request, res: Response) => {
   // Responde 200 rápido para que Evolution API no reintente
@@ -42,8 +67,10 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
   // Solo procesamos mensajes entrantes de texto
   if (payload.event !== 'messages.upsert') return;
   if (payload.data.key.fromMe) return;
+  if (payload.data.key.remoteJid.endsWith('@g.us')) return; // ignorar grupos
 
-  const clienteTel = extractPhone(payload.data.key.remoteJid);
+  const remoteJid  = payload.data.key.remoteJid;          // JID completo (puede ser @lid)
+  const clienteTel = extractPhone(remoteJid);               // Solo para BD
   const clienteNombre = payload.data.pushName;
   const messageText = extractMessageText(payload);
 
@@ -68,7 +95,7 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
     // 3. Verifica límite del plan
     if (!isWithinLimit(empresa)) {
       await sendText(
-        clienteTel,
+        remoteJid,
         '⚠️ El servicio de atención automática está temporalmente suspendido. ' +
         'Nos comunicaremos contigo pronto.',
         evoCfg.instance, evoCfg.url, evoCfg.key,
@@ -159,7 +186,7 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
     const chunks = splitMessage(aiResponse.text);
     for (const chunk of chunks) {
       if (chunk.delayBeforeMs > 0) await sleep(chunk.delayBeforeMs);
-      await sendText(clienteTel, chunk.text, evoCfg.instance, evoCfg.url, evoCfg.key);
+      await sendText(remoteJid, chunk.text, evoCfg.instance, evoCfg.url, evoCfg.key);
     }
 
     console.log(
