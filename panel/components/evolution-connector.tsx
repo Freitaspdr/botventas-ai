@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 type ConnState = 'loading' | 'no_instance' | 'disconnected' | 'connecting' | 'qr_ready' | 'connected' | 'error';
 
 interface Props {
-  instance?: string;
+  instance?:  string;
+  empresaId?: string; // superadmin: gestionar empresa específica
 }
 
 function StatusBadge({ state }: { state: ConnState }) {
@@ -29,7 +30,9 @@ function StatusBadge({ state }: { state: ConnState }) {
   );
 }
 
-export function EvolutionConnector({ instance }: Props) {
+export function EvolutionConnector({ instance, empresaId }: Props) {
+  const qs = empresaId ? `&empresaId=${empresaId}` : '';
+  const apiBase = `/api/evolution`;
   const [state, setState] = useState<ConnState>('loading');
   const [qrBase64, setQrBase64] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export function EvolutionConnector({ instance }: Props) {
 
   async function checkStatus() {
     try {
-      const res = await fetch('/api/evolution?action=status');
+      const res = await fetch(`${apiBase}?action=status${qs}`);
       if (res.status === 400) { setState('no_instance'); return; }
       const data = await res.json();
       if (!res.ok) { setError(data?.error || `HTTP ${res.status}`); setState('error'); return; }
@@ -69,7 +72,7 @@ export function EvolutionConnector({ instance }: Props) {
 
   async function fetchQr() {
     try {
-      const res = await fetch('/api/evolution?action=qr');
+      const res = await fetch(`${apiBase}?action=qr${qs}`);
       const data = await res.json();
       const b64 = data?.base64 || data?.qrcode?.base64 || data?.code;
       if (b64) {
@@ -79,7 +82,7 @@ export function EvolutionConnector({ instance }: Props) {
         setCountdown(30);
       }
       // Check if connected while polling
-      const connRes = await fetch('/api/evolution?action=status');
+      const connRes = await fetch(`${apiBase}?action=status${qs}`);
       const connData = await connRes.json();
       const s = connData?.instance?.state || connData?.state || '';
       if (s === 'open') {
@@ -105,7 +108,7 @@ export function EvolutionConnector({ instance }: Props) {
     setError(null);
     setQrBase64(null);
     try {
-      const res = await fetch('/api/evolution', { method: 'POST' });
+      const res = await fetch(`${apiBase}${empresaId ? `?empresaId=${empresaId}` : ''}`, { method: 'POST' });
       const data = await res.json();
       const b64 = data?.base64 || data?.qrcode?.base64 || data?.code;
       if (b64) {
@@ -126,7 +129,7 @@ export function EvolutionConnector({ instance }: Props) {
     setState('loading');
     setError(null);
     try {
-      const res = await fetch('/api/evolution', {
+      const res = await fetch(`${apiBase}${empresaId ? `?empresaId=${empresaId}` : ''}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instanceName: newInstance.trim() }),
@@ -144,7 +147,7 @@ export function EvolutionConnector({ instance }: Props) {
     setState('loading');
     clearTimers();
     try {
-      await fetch('/api/evolution', { method: 'DELETE' });
+      await fetch(`${apiBase}${empresaId ? `?empresaId=${empresaId}` : ''}`, { method: 'DELETE' });
       setState('disconnected');
       setPhoneNumber(null);
       setQrBase64(null);

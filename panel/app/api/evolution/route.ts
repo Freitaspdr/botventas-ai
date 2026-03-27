@@ -18,6 +18,15 @@ async function getEmpresaConfig(empresaId: string) {
   return data;
 }
 
+// Resuelve el empresaId correcto: superadmin puede pasar ?empresaId=xxx
+async function resolveEmpresaId(req: Request, session: { user?: { empresaId?: string; rol?: string } } | null): Promise<string | null> {
+  const { searchParams } = new URL(req.url);
+  const paramId = searchParams.get('empresaId');
+  const rol = (session?.user as { rol?: string })?.rol;
+  if (paramId && rol === 'superadmin') return paramId;
+  return session?.user?.empresaId ?? null;
+}
+
 function evoHeaders(apiKey: string): Record<string, string> {
   return { 'Content-Type': 'application/json', apikey: apiKey };
 }
@@ -26,10 +35,11 @@ function evoHeaders(apiKey: string): Record<string, string> {
 // GET ?action=qr      →  GET /instance/qrcode/:instance
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const empresaId = await resolveEmpresaId(req, session);
+  if (!empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const empresa = await getEmpresaConfig(session.user.empresaId);
+    const empresa = await getEmpresaConfig(empresaId);
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action') || 'status';
     const instance = empresa.evolution_instance;
@@ -57,10 +67,11 @@ export async function GET(req: Request) {
 // POST → POST /instance/connect/:instance  (genera QR)
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const empresaId = await resolveEmpresaId(req, session);
+  if (!empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const empresa = await getEmpresaConfig(session.user.empresaId);
+    const empresa = await getEmpresaConfig(empresaId);
     const instance = empresa.evolution_instance;
     if (!instance) return NextResponse.json({ error: 'Sin instancia configurada' }, { status: 400 });
 
@@ -79,11 +90,12 @@ export async function POST(req: Request) {
 // PUT → Crear instancia nueva en Evolution API + guardar en DB
 export async function PUT(req: Request) {
   const session = await auth();
-  if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const empresaId = await resolveEmpresaId(req, session);
+  if (!empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const body = await req.json().catch(() => ({}));
-    const empresa = await getEmpresaConfig(session.user.empresaId);
+    const empresa = await getEmpresaConfig(empresaId);
     const base = empresa.evolution_api_url || 'http://46.225.183.139:8080';
     const apiKey = empresa.evolution_api_key || '';
     const headers = evoHeaders(apiKey);
@@ -120,7 +132,7 @@ export async function PUT(req: Request) {
       await getSupabase()
         .from('empresas')
         .update({ evolution_instance: instanceName })
-        .eq('id', session.user.empresaId);
+        .eq('id', empresaId);
     }
 
     const payload = res.status === 409 ? { instanceName, alreadyExists: true } : await res.json();
@@ -132,12 +144,13 @@ export async function PUT(req: Request) {
 }
 
 // DELETE → Logout instancia (desconectar WhatsApp)
-export async function DELETE() {
+export async function DELETE(req: Request) {
   const session = await auth();
-  if (!session?.user?.empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const empresaId = await resolveEmpresaId(req, session);
+  if (!empresaId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const empresa = await getEmpresaConfig(session.user.empresaId);
+    const empresa = await getEmpresaConfig(empresaId);
     const instance = empresa.evolution_instance;
     if (!instance) return NextResponse.json({ error: 'Sin instancia configurada' }, { status: 400 });
 

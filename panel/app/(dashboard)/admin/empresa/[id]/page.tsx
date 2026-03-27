@@ -49,7 +49,7 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <EvolutionConnector instance={empresa.evolution_instance} />
+      <EvolutionConnector instance={empresa.evolution_instance} empresaId={id} />
       <div className="mt-3" />
       <BotConfigForm empresa={empresa} isSuperAdmin={true} empresaId={id} />
     </div>
