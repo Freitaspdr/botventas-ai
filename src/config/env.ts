@@ -18,6 +18,8 @@ export const env = {
   // Modo test: si está definido, solo responde a esos números (separados por coma)
   // Ej: TEST_WHITELIST=34612345678,34698765432
   TEST_WHITELIST:                process.env.TEST_WHITELIST ?? '',
+  // OpenAI Whisper para transcripción de audios (opcional)
+  OPENAI_API_KEY:                process.env.OPENAI_API_KEY ?? '',
   // Google Calendar (opcional — graceful degradation si no está configurado)
   GOOGLE_CALENDAR_ID:            process.env.GOOGLE_CALENDAR_ID ?? 'primary',
   GOOGLE_SERVICE_ACCOUNT_EMAIL:  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ?? '',

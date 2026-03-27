@@ -76,17 +76,26 @@ export interface EvolutionWebhookPayload {
   instance: string;
   data: {
     key: {
-      remoteJid: string;   // número@s.whatsapp.net
+      remoteJid: string;   // número@s.whatsapp.net o @lid
       fromMe:    boolean;
       id:        string;
     };
     message?: {
       conversation?:         string;
       extendedTextMessage?:  { text: string };
+      audioMessage?:         { mimetype?: string; seconds?: number; ptt?: boolean };
     };
     messageType: string;
     pushName?:   string;
   };
+}
+
+export function isAudioMessage(payload: EvolutionWebhookPayload): boolean {
+  return (
+    payload.data.messageType === 'audioMessage' ||
+    payload.data.messageType === 'pttMessage' ||
+    !!payload.data.message?.audioMessage
+  );
 }
 
 export function extractPhone(remoteJid: string): string {

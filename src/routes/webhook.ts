@@ -3,11 +3,13 @@ import {
   EvolutionWebhookPayload,
   extractPhone,
   extractMessageText,
+  isAudioMessage,
   sendText,
   getEvolutionConfigForEmpresa,
   connectEvolutionInstance,
   getEvolutionInstanceStatus,
 } from '../services/whatsapp.service';
+import { transcribeAudio } from '../services/transcription.service';
 import {
   getEmpresaByWhatsapp,
   getEmpresaByInstance,
@@ -92,7 +94,27 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
   const remoteJid     = payload.data.key.remoteJid;
   const clienteTel    = extractPhone(remoteJid);
   const clienteNombre = payload.data.pushName;
-  const messageText   = extractMessageText(payload);
+
+  let messageText = extractMessageText(payload);
+
+  // Si es un audio y Whisper está configurado, transcribir
+  if (!messageText && isAudioMessage(payload) && env.OPENAI_API_KEY) {
+    try {
+      // Necesitamos evoCfg para descargar el audio — lookup rápido por instancia
+      const empresa = await getEmpresaByInstance(payload.instance)
+        ?? await getEmpresaByWhatsapp(env.EVOLUTION_INSTANCE);
+      if (empresa) {
+        const evoCfg = await getEvolutionConfigForEmpresa(empresa.id);
+        console.log(`🎙️  Audio recibido de ${clienteTel}, transcribiendo...`);
+        messageText = await transcribeAudio(
+          payload.data.key,
+          evoCfg.instance, evoCfg.url, evoCfg.key,
+        );
+      }
+    } catch (err) {
+      console.error('❌ Error transcribiendo audio:', err);
+    }
+  }
 
   if (!messageText?.trim()) return;
 
