@@ -126,5 +126,16 @@
   }
   html {
     @apply font-sans;
+    color-scheme: dark;
+  }
+
+  /* Force dark background on all native select/option elements */
+  select {
+    background-color: #111113;
+    color: #fafafa;
+  }
+  select option {
+    background-color: #111113;
+    color: #fafafa;
   }
 }
