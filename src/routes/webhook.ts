@@ -243,7 +243,7 @@ async function processBurst(burstKey: string, entry: BurstEntry): Promise<void> 
 
     if (shouldDefer) {
       console.log(`🌙 Fuera de horario, respuesta diferida para las 9:00 → ${clienteTel}`);
-      await saveDeferredMessage(convId, clienteTel, aiResponse.text);
+      await saveDeferredMessage(convId, clienteTel, remoteJid, aiResponse.text);
       return;
     }
 
@@ -277,6 +277,7 @@ import { db } from '../db/client';
 async function saveDeferredMessage(
   convId: string,
   clienteTel: string,
+  remoteJid: string,
   contenido: string,
 ): Promise<void> {
   const tomorrow9am = new Date();
@@ -284,9 +285,9 @@ async function saveDeferredMessage(
   tomorrow9am.setHours(9, 0, 0, 0);
 
   await db.query(
-    `INSERT INTO mensajes_programados (conv_id, cliente_tel, contenido, enviar_en)
-     VALUES ($1, $2, $3, $4)`,
-    [convId, clienteTel, contenido, tomorrow9am],
+    `INSERT INTO mensajes_programados (conv_id, cliente_tel, remote_jid, contenido, enviar_en)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [convId, clienteTel, remoteJid, contenido, tomorrow9am],
   );
 }
 
