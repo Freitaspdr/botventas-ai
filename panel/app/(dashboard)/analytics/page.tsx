@@ -1,18 +1,9 @@
 import { Suspense } from 'react';
 import { StatsCard } from '@/components/stats-card';
 import { AnalyticsChart } from '@/components/analytics-chart';
+import { getAnalyticsOverview, getAnalyticsChart, getAnalyticsServices } from '@/lib/data';
 
 type SearchParams = { dias?: string };
-
-async function fetchJson<T>(url: string): Promise<T | null> {
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 interface Overview {
   totalLeads: number;
@@ -49,12 +40,11 @@ export default async function AnalyticsPage({
 }) {
   const sp = await searchParams;
   const dias = parseInt(sp.dias ?? '30', 10);
-  const base = process.env.NEXTAUTH_URL ?? 'http://localhost:3001';
 
   const [overview, chartData, services] = await Promise.all([
-    fetchJson<Overview>(`${base}/api/analytics/overview?dias=${dias}`),
-    fetchJson<ChartPoint[]>(`${base}/api/analytics/chart?dias=${dias}`),
-    fetchJson<ServiceRow[]>(`${base}/api/analytics/services?dias=${dias}`),
+    getAnalyticsOverview(dias),
+    getAnalyticsChart(dias),
+    getAnalyticsServices(dias),
   ]);
 
   return (

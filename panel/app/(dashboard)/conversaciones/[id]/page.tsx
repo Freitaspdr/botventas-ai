@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChatViewer } from '@/components/chat-viewer';
 import { TakeControlButton } from '@/components/take-control-button';
+import { getConversacionDetalle } from '@/lib/data';
 
 interface Lead {
   id: string;
@@ -37,17 +38,6 @@ interface ConvData {
   cita: Cita | null;
 }
 
-async function getConversacion(id: string): Promise<ConvData | null> {
-  try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/conversaciones/${id}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 function nivelBadge(nivel: string) {
   const map: Record<string, { bg: string; color: string }> = {
@@ -84,7 +74,7 @@ export default async function ConversacionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getConversacion(id);
+  const data = await getConversacionDetalle(id);
 
   if (!data) {
     return (

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { StatsCard } from '@/components/stats-card';
 import { SectionCard } from '@/components/section-card';
+import { getDashboardStats, getDashboardRevenue, getDashboardFeed, getDashboardAgenda, getDashboardFunnel } from '@/lib/data';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,19 +59,6 @@ function avatarStyle(nivel?: string | null, estado?: string) {
   if (nivel === 'alto')         return { bg: 'linear-gradient(135deg,#064e3b,#065f46)', color: '#6ee7b7' };
   if (nivel === 'medio')        return { bg: 'linear-gradient(135deg,#1e1b4b,#312e81)', color: '#a5b4fc' };
   return { bg: 'rgba(255,255,255,0.04)', color: '#a1a1aa' };
-}
-
-// ── data fetchers (server) ────────────────────────────────────────────────────
-
-async function fetchJson<T>(path: string): Promise<T | null> {
-  try {
-    const base = process.env.NEXTAUTH_URL ?? 'http://localhost:3001';
-    const res = await fetch(`${base}${path}`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json() as Promise<T>;
-  } catch {
-    return null;
-  }
 }
 
 interface Stats {
@@ -135,11 +123,11 @@ export default async function DashboardPage() {
   const userName = session?.user?.name?.split(' ')[0] ?? '';
 
   const [stats, revenue, feed, agenda, funnel] = await Promise.all([
-    fetchJson<Stats>('/api/dashboard/stats'),
-    fetchJson<Revenue>('/api/dashboard/revenue'),
-    fetchJson<FeedItem[]>('/api/dashboard/feed'),
-    fetchJson<AgendaItem[]>('/api/dashboard/agenda'),
-    fetchJson<FunnelData>('/api/dashboard/funnel'),
+    getDashboardStats(),
+    getDashboardRevenue(),
+    getDashboardFeed(),
+    getDashboardAgenda(),
+    getDashboardFunnel(),
   ]);
 
   const planPct = revenue ? Math.round((revenue.convUsadas / revenue.convLimite) * 100) : 0;

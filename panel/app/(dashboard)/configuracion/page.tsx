@@ -1,15 +1,6 @@
 import { BotConfigForm } from '@/components/bot-config-form';
 import { EvolutionConnector } from '@/components/evolution-connector';
-
-async function getEmpresa() {
-  try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/empresa`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
+import { getEmpresa } from '@/lib/data';
 
 export default async function ConfiguracionPage() {
   const empresa = await getEmpresa();

@@ -1,18 +1,13 @@
 import { LeadsKanban } from '@/components/leads-kanban';
+import { getLeads, getDashboardRevenue, getDashboardStats } from '@/lib/data';
 
 async function getData() {
-  const base = process.env.NEXTAUTH_URL ?? 'http://localhost:3001';
-  const [leadsRes, revenueRes, statsRes] = await Promise.all([
-    fetch(`${base}/api/leads`, { cache: 'no-store' }),
-    fetch(`${base}/api/dashboard/revenue`, { cache: 'no-store' }),
-    fetch(`${base}/api/dashboard/stats`, { cache: 'no-store' }),
+  const [leads, revenue, stats] = await Promise.all([
+    getLeads(),
+    getDashboardRevenue(),
+    getDashboardStats(),
   ]);
 
-  const leads   = leadsRes.ok   ? await leadsRes.json()   : [];
-  const revenue = revenueRes.ok ? await revenueRes.json() : null;
-  const stats   = statsRes.ok   ? await statsRes.json()   : null;
-
-  // Ticket medio de leads con ticket_estimado
   const leadsConTicket = leads.filter((l: { ticket_estimado?: number }) => l.ticket_estimado);
   const ticketMedio = leadsConTicket.length > 0
     ? Math.round(leadsConTicket.reduce((s: number, l: { ticket_estimado: number }) => s + l.ticket_estimado, 0) / leadsConTicket.length)

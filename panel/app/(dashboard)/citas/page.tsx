@@ -1,14 +1,5 @@
 import { SemanaCitas } from '@/components/semana-citas';
-
-async function getCitas() {
-  try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/citas`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
+import { getCitas } from '@/lib/data';
 
 export default async function CitasPage() {
   const citas = await getCitas();

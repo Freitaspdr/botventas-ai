@@ -1,26 +1,8 @@
 import { ConversationTable } from '@/components/conversation-table';
 import { ConversacionesFilters } from '@/components/conversaciones-filters';
+import { getConversaciones } from '@/lib/data';
 
 type SearchParams = { estado?: string; desde?: string; hasta?: string; q?: string };
-
-async function getConversaciones(params: SearchParams) {
-  const q = new URLSearchParams();
-  if (params.estado) q.set('estado', params.estado);
-  if (params.desde)  q.set('desde',  params.desde);
-  if (params.hasta)  q.set('hasta',  params.hasta);
-  if (params.q)      q.set('q',      params.q);
-
-  try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL}/api/conversaciones${q.size ? `?${q}` : ''}`,
-      { cache: 'no-store' },
-    );
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
 
 export default async function ConversacionesPage({
   searchParams,
