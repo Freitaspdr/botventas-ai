@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { createClient } from '@supabase/supabase-js';
 import { AdminForms } from '@/components/admin-forms';
+import Link from 'next/link';
 
 function getSupabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
@@ -42,7 +43,7 @@ export default async function AdminPage() {
           <table className="w-full text-[12px]">
             <thead>
               <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
-                {['Nombre', 'Plan', 'Conv', 'Instancia WA', 'Número WA'].map(h => (
+                {['Nombre', 'Plan', 'Conv', 'Instancia WA', 'Número WA', ''].map(h => (
                   <th key={h} className="px-3 py-2 text-left font-medium" style={{ color: '#71717a' }}>{h}</th>
                 ))}
               </tr>
@@ -51,10 +52,19 @@ export default async function AdminPage() {
               {empresas.map(e => (
                 <tr key={e.id} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.04)' }}>
                   <td className="px-3 py-2" style={{ color: '#fafafa' }}>{e.nombre}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.plan}</td>
+                  <td className="px-3 py-2 capitalize" style={{ color: '#a1a1aa' }}>{e.plan}</td>
                   <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.conv_usadas}/{e.conv_limite}</td>
                   <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.evolution_instance || '—'}</td>
                   <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.whatsapp_num || '—'}</td>
+                  <td className="px-3 py-2">
+                    <Link
+                      href={`/admin/empresa/${e.id}`}
+                      className="text-[11px] px-2.5 py-1 rounded-md transition-colors hover:bg-blue-500/20"
+                      style={{ color: '#60a5fa', border: '0.5px solid rgba(96,165,250,0.2)' }}
+                    >
+                      Configurar
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

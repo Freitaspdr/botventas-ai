@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PromptGenerator } from './prompt-generator';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BotConfigForm({ empresa }: { empresa: any }) {
+export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { empresa: any; isSuperAdmin?: boolean; empresaId?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [form, setForm] = useState<any>(empresa);
   const [saving, setSaving] = useState(false);
@@ -19,26 +19,33 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch('/api/empresa', {
+    const payload: Record<string, unknown> = {
+      bot_nombre:      form.bot_nombre,
+      bot_tono:        form.bot_tono,
+      bot_ciudad:      form.bot_ciudad,
+      encargado_tel:   form.encargado_tel,
+      notif_hot_leads: form.notif_hot_leads,
+      notif_transfers: form.notif_transfers,
+      notif_nuevos:    form.notif_nuevos,
+      notif_resumen:   form.notif_resumen,
+    };
+    if (isSuperAdmin) {
+      payload.bot_objetivo       = form.bot_objetivo;
+      payload.bot_productos      = form.bot_productos;
+      payload.bot_horarios       = form.bot_horarios;
+      payload.bot_extra          = form.bot_extra;
+      payload.evolution_instance = form.evolution_instance;
+      payload.evolution_api_url  = form.evolution_api_url  || null;
+      payload.evolution_api_key  = form.evolution_api_key  || null;
+      payload.plan               = form.plan;
+    }
+    const url = isSuperAdmin && empresaId
+      ? `/api/admin/empresa/${empresaId}`
+      : '/api/empresa';
+    await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bot_nombre:         form.bot_nombre,
-        bot_tono:           form.bot_tono,
-        bot_objetivo:       form.bot_objetivo,
-        bot_productos:      form.bot_productos,
-        bot_horarios:       form.bot_horarios,
-        bot_ciudad:         form.bot_ciudad,
-        bot_extra:          form.bot_extra,
-        encargado_tel:      form.encargado_tel,
-        evolution_instance: form.evolution_instance,
-        evolution_api_url:  form.evolution_api_url  || null,
-        evolution_api_key:  form.evolution_api_key  || null,
-        notif_hot_leads:    form.notif_hot_leads,
-        notif_transfers:    form.notif_transfers,
-        notif_nuevos:       form.notif_nuevos,
-        notif_resumen:      form.notif_resumen,
-      }),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
     setSaved(true);
@@ -76,44 +83,46 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-2xl">
 
-      {/* ── Generador de prompts ── */}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ border: '0.5px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.03)' }}
-      >
-        <button
-          type="button"
-          onClick={() => setShowGenerator(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
+      {/* ── Generador de prompts (solo superadmin) ── */}
+      {isSuperAdmin && (
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{ border: '0.5px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.03)' }}
         >
-          <div className="flex items-center gap-2.5">
-            <span className="text-[14px]">✨</span>
-            <div className="text-left">
-              <p className="text-[13px] font-medium" style={{ color: '#4ade80' }}>Asistente de configuración</p>
-              <p className="text-[11px]" style={{ color: '#71717a' }}>Genera los textos del bot respondiendo preguntas paso a paso</p>
+          <button
+            type="button"
+            onClick={() => setShowGenerator(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-[14px]">✨</span>
+              <div className="text-left">
+                <p className="text-[13px] font-medium" style={{ color: '#4ade80' }}>Asistente de configuración</p>
+                <p className="text-[11px]" style={{ color: '#71717a' }}>Genera los textos del bot respondiendo preguntas paso a paso</p>
+              </div>
             </div>
-          </div>
-          <span className="text-[11px]" style={{ color: '#71717a' }}>
-            {showGenerator ? '▲ Cerrar' : '▼ Abrir'}
-          </span>
-        </button>
+            <span className="text-[11px]" style={{ color: '#71717a' }}>
+              {showGenerator ? '▲ Cerrar' : '▼ Abrir'}
+            </span>
+          </button>
 
-        {showGenerator && (
-          <div className="px-4 pb-4 pt-1" style={{ borderTop: '0.5px solid rgba(34,197,94,0.1)' }}>
-            <PromptGenerator
-              onApply={(values) => {
-                set('bot_objetivo',  values.bot_objetivo);
-                set('bot_productos', values.bot_productos);
-                set('bot_horarios',  values.bot_horarios);
-                set('bot_extra',     values.bot_extra);
-                setShowGenerator(false);
-                setSaved(false);
-              }}
-              onClose={() => setShowGenerator(false)}
-            />
-          </div>
-        )}
-      </div>
+          {showGenerator && (
+            <div className="px-4 pb-4 pt-1" style={{ borderTop: '0.5px solid rgba(34,197,94,0.1)' }}>
+              <PromptGenerator
+                onApply={(values) => {
+                  set('bot_objetivo',  values.bot_objetivo);
+                  set('bot_productos', values.bot_productos);
+                  set('bot_horarios',  values.bot_horarios);
+                  set('bot_extra',     values.bot_extra);
+                  setShowGenerator(false);
+                  setSaved(false);
+                }}
+                onClose={() => setShowGenerator(false)}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Sección 1: Identidad ── */}
       {sectionTitle('Identidad del bot')}
@@ -145,25 +154,29 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
         <input style={inputStyle} value={form.bot_ciudad || ''} onChange={e => set('bot_ciudad', e.target.value)} placeholder="Madrid" />
       </div>
 
-      {/* ── Sección 2: Catálogo ── */}
-      {sectionTitle('Catálogo')}
-      {[
-        { key: 'bot_objetivo',  label: 'Objetivo del bot',               rows: 3,  placeholder: 'Cualificar leads de car audio…' },
-        { key: 'bot_productos', label: 'Catálogo de productos/servicios', rows: 8,  placeholder: 'Sonido: instalación de altavoces y amplificadores…' },
-        { key: 'bot_horarios',  label: 'Horarios de atención',            rows: 2,  placeholder: 'Lunes a viernes 9-18h, Sábados 10-14h' },
-        { key: 'bot_extra',     label: 'Instrucciones especiales',        rows: 4,  placeholder: 'Siempre preguntar año y modelo antes de dar precio…' },
-      ].map(({ key, label, rows, placeholder }) => (
-        <div key={key}>
-          <label style={labelStyle}>{label}</label>
-          <textarea
-            style={{ ...textareaStyle, minHeight: rows * 22 } as React.CSSProperties}
-            value={form[key] || ''}
-            onChange={e => set(key, e.target.value)}
-            placeholder={placeholder}
-            rows={rows}
-          />
-        </div>
-      ))}
+      {/* ── Sección 2: Catálogo (solo superadmin) ── */}
+      {isSuperAdmin && (
+        <>
+          {sectionTitle('Catálogo')}
+          {[
+            { key: 'bot_objetivo',  label: 'Objetivo del bot',               rows: 3,  placeholder: 'Cualificar leads de car audio…' },
+            { key: 'bot_productos', label: 'Catálogo de productos/servicios', rows: 8,  placeholder: 'Sonido: instalación de altavoces y amplificadores…' },
+            { key: 'bot_horarios',  label: 'Horarios de atención',            rows: 2,  placeholder: 'Lunes a viernes 9-18h, Sábados 10-14h' },
+            { key: 'bot_extra',     label: 'Instrucciones especiales',        rows: 4,  placeholder: 'Siempre preguntar año y modelo antes de dar precio…' },
+          ].map(({ key, label, rows, placeholder }) => (
+            <div key={key}>
+              <label style={labelStyle}>{label}</label>
+              <textarea
+                style={{ ...textareaStyle, minHeight: rows * 22 } as React.CSSProperties}
+                value={form[key] || ''}
+                onChange={e => set(key, e.target.value)}
+                placeholder={placeholder}
+                rows={rows}
+              />
+            </div>
+          ))}
+        </>
+      )}
 
       {/* ── Sección 3: Notificaciones ── */}
       {sectionTitle('Notificaciones')}
@@ -212,16 +225,28 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
         ))}
       </div>
 
-      {/* ── Sección 4: Plan (solo lectura) ── */}
+      {/* ── Sección 4: Plan ── */}
       {sectionTitle('Plan')}
       <div
         className="rounded-xl p-4 flex flex-col gap-3"
         style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.05)' }}
       >
         <div className="flex items-center justify-between">
-          <span className="text-[13px]" style={{ color: '#a1a1aa' }}>
-            Plan <span className="font-medium capitalize" style={{ color: '#fafafa' }}>{form.plan}</span>
-          </span>
+          {isSuperAdmin ? (
+            <select
+              style={{ ...inputStyle, width: 'auto', cursor: 'pointer' }}
+              value={form.plan || 'starter'}
+              onChange={e => set('plan', e.target.value)}
+            >
+              <option value="starter">Starter — 500 conv</option>
+              <option value="pro">Pro — 2.000 conv</option>
+              <option value="enterprise">Enterprise — Ilimitado</option>
+            </select>
+          ) : (
+            <span className="text-[13px]" style={{ color: '#a1a1aa' }}>
+              Plan <span className="font-medium capitalize" style={{ color: '#fafafa' }}>{form.plan}</span>
+            </span>
+          )}
           <span className="text-[12px]" style={{ color: '#a1a1aa' }}>
             {form.conv_usadas?.toLocaleString('es-ES')} / {form.conv_limite?.toLocaleString('es-ES')} conversaciones
           </span>
@@ -229,55 +254,54 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
         <div className="h-[5px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
           <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(planPct, 100)}%`, background: planColor }} />
         </div>
-        <button
-          type="button"
-          disabled
-          className="text-[12px] py-2 rounded-lg opacity-40 cursor-not-allowed"
-          style={{ background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
-        >
-          Cambiar plan (próximamente)
-        </button>
+        {!isSuperAdmin && (
+          <p className="text-[11px]" style={{ color: '#52525b' }}>Contacta con tu administrador para cambiar de plan.</p>
+        )}
       </div>
 
-      {/* ── Evolution API ── */}
-      {sectionTitle('WhatsApp / Evolution API')}
-      <div className="flex flex-col gap-4">
-        <div>
-          <label style={labelStyle}>URL del servidor Evolution API</label>
-          <input
-            style={{ ...inputStyle, fontFamily: 'monospace' }}
-            value={form.evolution_api_url || ''}
-            onChange={e => set('evolution_api_url', e.target.value)}
-            placeholder="http://localhost:8080  (vacío = usar servidor global)"
-          />
-          <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
-            Deja vacío para usar el servidor Evolution API compartido del sistema.
-          </p>
-        </div>
-        <div>
-          <label style={labelStyle}>API Key de Evolution API</label>
-          <input
-            type="password"
-            style={{ ...inputStyle, fontFamily: 'monospace' }}
-            value={form.evolution_api_key || ''}
-            onChange={e => set('evolution_api_key', e.target.value)}
-            placeholder="(vacío = usar clave global)"
-            autoComplete="new-password"
-          />
-        </div>
-        <div>
-          <label style={labelStyle}>Nombre de instancia</label>
-          <input
-            style={{ ...inputStyle, fontFamily: 'monospace' }}
-            value={form.evolution_instance || ''}
-            onChange={e => set('evolution_instance', e.target.value)}
-            placeholder="beleti-bot"
-          />
-          <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
-            Nombre exacto de la instancia en Evolution API. Debe coincidir con el nombre que aparece en el panel de Evolution.
-          </p>
-        </div>
-      </div>
+      {/* ── Evolution API (solo superadmin) ── */}
+      {isSuperAdmin && (
+        <>
+          {sectionTitle('WhatsApp / Evolution API')}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label style={labelStyle}>URL del servidor Evolution API</label>
+              <input
+                style={{ ...inputStyle, fontFamily: 'monospace' }}
+                value={form.evolution_api_url || ''}
+                onChange={e => set('evolution_api_url', e.target.value)}
+                placeholder="http://localhost:8080  (vacío = usar servidor global)"
+              />
+              <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
+                Deja vacío para usar el servidor Evolution API compartido del sistema.
+              </p>
+            </div>
+            <div>
+              <label style={labelStyle}>API Key de Evolution API</label>
+              <input
+                type="password"
+                style={{ ...inputStyle, fontFamily: 'monospace' }}
+                value={form.evolution_api_key || ''}
+                onChange={e => set('evolution_api_key', e.target.value)}
+                placeholder="(vacío = usar clave global)"
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Nombre de instancia</label>
+              <input
+                style={{ ...inputStyle, fontFamily: 'monospace' }}
+                value={form.evolution_instance || ''}
+                onChange={e => set('evolution_instance', e.target.value)}
+                placeholder="beleti-bot"
+              />
+              <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
+                Nombre exacto de la instancia en Evolution API.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Save button ── */}
       <button

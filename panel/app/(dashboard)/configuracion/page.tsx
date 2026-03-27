@@ -1,9 +1,11 @@
 import { BotConfigForm } from '@/components/bot-config-form';
 import { EvolutionConnector } from '@/components/evolution-connector';
 import { getEmpresa } from '@/lib/data';
+import { auth } from '@/lib/auth';
 
 export default async function ConfiguracionPage() {
-  const empresa = await getEmpresa();
+  const [empresa, session] = await Promise.all([getEmpresa(), auth()]);
+  const isSuperAdmin = (session?.user as { rol?: string })?.rol === 'superadmin';
 
   return (
     <div className="flex flex-col gap-5">
@@ -20,7 +22,7 @@ export default async function ConfiguracionPage() {
         <>
           <EvolutionConnector instance={empresa.evolution_instance} />
           <div className="mt-5" />
-          <BotConfigForm empresa={empresa} />
+          <BotConfigForm empresa={empresa} isSuperAdmin={isSuperAdmin} />
         </>
       ) : (
         <p className="text-[13px]" style={{ color: '#71717a' }}>No se pudo cargar la configuración.</p>
