@@ -1,5 +1,5 @@
 import { TopBar } from '@/components/top-bar';
-import { Sidebar } from '@/components/sidebar';
+import { SidebarWrapper } from '@/components/sidebar-wrapper';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <TopBar />
 
       {/* Sidebar fija, empieza debajo del top bar (top: 44px) */}
-      <Sidebar />
+      <SidebarWrapper />
 
       {/* Contenido principal: margen top 44px + margen left 56px */}
       <main

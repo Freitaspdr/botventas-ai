@@ -70,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.empresaId = (user as { empresaId?: string }).empresaId;
         token.rol       = (user as { rol?: string }).rol;
       }
-      if (!token.empresaId && token.email) {
+      if (!token.id && token.email) {
         try {
           const { data } = await getSupabase()
             .from('usuarios')

@@ -9,6 +9,7 @@ import {
   CalendarDays,
   TrendingUp,
   Settings2,
+  Shield,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -60,7 +61,7 @@ function NavItem({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
   return (
     <aside
       className="fixed left-0 top-11 bottom-0 z-30 flex flex-col items-center py-2 gap-0.5"
@@ -71,6 +72,9 @@ export function Sidebar() {
         {NAV_ITEMS.map((item) => (
           <NavItem key={item.href} {...item} />
         ))}
+        {isSuperAdmin && (
+          <NavItem href="/admin" icon={Shield} label="Admin" />
+        )}
       </nav>
 
       {/* Separador + Config */}
