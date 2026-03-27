@@ -150,11 +150,19 @@ const EMPRESA_FIELDS = [
   'notif_hot_leads', 'notif_transfers', 'notif_nuevos', 'notif_resumen',
 ].join(', ');
 
-export async function getEmpresa() {
+type EmpresaData = {
+  nombre: string; bot_nombre: string; bot_tono: string; bot_objetivo: string;
+  bot_productos: string; bot_horarios: string; bot_ciudad: string; bot_extra: string;
+  encargado_tel: string; evolution_instance: string; evolution_api_url: string;
+  evolution_api_key: string; plan: string; conv_limite: number; conv_usadas: number;
+  notif_hot_leads: boolean; notif_transfers: boolean; notif_nuevos: boolean; notif_resumen: boolean;
+};
+
+export async function getEmpresa(): Promise<EmpresaData | null> {
   const empresaId = await getEmpresaId();
   if (!empresaId) return null;
   const { data } = await getSupabase().from('empresas').select(EMPRESA_FIELDS).eq('id', empresaId).single();
-  return data ?? null;
+  return (data as unknown as EmpresaData) ?? null;
 }
 
 // ── analytics ─────────────────────────────────────────────────────────────────
