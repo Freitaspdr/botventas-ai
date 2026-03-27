@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PromptGenerator } from './prompt-generator';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function BotConfigForm({ empresa }: { empresa: any }) {
@@ -8,6 +9,7 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
   const [form, setForm] = useState<any>(empresa);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showGenerator, setShowGenerator] = useState(false);
 
   function set(key: string, value: unknown) {
     setForm((prev: Record<string, unknown>) => ({ ...prev, [key]: value }));
@@ -73,6 +75,45 @@ export function BotConfigForm({ empresa }: { empresa: any }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-2xl">
+
+      {/* ── Generador de prompts ── */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ border: '0.5px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.03)' }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowGenerator(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-[14px]">✨</span>
+            <div className="text-left">
+              <p className="text-[13px] font-medium" style={{ color: '#4ade80' }}>Asistente de configuración</p>
+              <p className="text-[11px]" style={{ color: '#71717a' }}>Genera los textos del bot respondiendo preguntas paso a paso</p>
+            </div>
+          </div>
+          <span className="text-[11px]" style={{ color: '#71717a' }}>
+            {showGenerator ? '▲ Cerrar' : '▼ Abrir'}
+          </span>
+        </button>
+
+        {showGenerator && (
+          <div className="px-4 pb-4 pt-1" style={{ borderTop: '0.5px solid rgba(34,197,94,0.1)' }}>
+            <PromptGenerator
+              onApply={(values) => {
+                set('bot_objetivo',  values.bot_objetivo);
+                set('bot_productos', values.bot_productos);
+                set('bot_horarios',  values.bot_horarios);
+                set('bot_extra',     values.bot_extra);
+                setShowGenerator(false);
+                setSaved(false);
+              }}
+              onClose={() => setShowGenerator(false)}
+            />
+          </div>
+        )}
+      </div>
 
       {/* ── Sección 1: Identidad ── */}
       {sectionTitle('Identidad del bot')}
