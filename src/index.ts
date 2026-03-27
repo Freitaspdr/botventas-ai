@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { env } from './config/env';
 import { testConnection } from './db/client';
 import { webhookRouter } from './routes/webhook';
@@ -11,6 +12,12 @@ async function main() {
   await testConnection();
 
   const app = express();
+
+  app.use(cors({
+    origin: ['http://localhost:8080', 'http://localhost:3001'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'apikey'],
+  }));
 
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true }));

@@ -1,4 +1,5 @@
 import { BotConfigForm } from '@/components/bot-config-form';
+import { EvolutionConnector } from '@/components/evolution-connector';
 
 async function getEmpresa() {
   try {
@@ -25,7 +26,11 @@ export default async function ConfiguracionPage() {
       </div>
 
       {empresa ? (
-        <BotConfigForm empresa={empresa} />
+        <>
+          <EvolutionConnector instance={empresa.evolution_instance} />
+          <div className="mt-5" />
+          <BotConfigForm empresa={empresa} />
+        </>
       ) : (
         <p className="text-[13px]" style={{ color: '#71717a' }}>No se pudo cargar la configuración.</p>
       )}

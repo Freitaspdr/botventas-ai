@@ -46,6 +46,29 @@ export async function getEvolutionConfigForEmpresa(empresaId: string): Promise<{
   };
 }
 
+export async function connectEvolutionInstance(
+  instance: string = env.EVOLUTION_INSTANCE,
+  apiUrl: string = env.EVOLUTION_API_URL,
+  apiKey: string = env.EVOLUTION_API_KEY,
+): Promise<any> {
+  return axios.post(
+    `${apiUrl}/instance/connect/${instance}`,
+    {},
+    { headers: { apikey: apiKey, 'Content-Type': 'application/json' } },
+  );
+}
+
+export async function getEvolutionInstanceStatus(
+  instance: string = env.EVOLUTION_INSTANCE,
+  apiUrl: string = env.EVOLUTION_API_URL,
+  apiKey: string = env.EVOLUTION_API_KEY,
+): Promise<any> {
+  return axios.get(
+    `${apiUrl}/instance/status/${instance}`,
+    { headers: { apikey: apiKey } },
+  );
+}
+
 // ─── Helpers para parsear payloads de Evolution API ─────────────────────────
 
 export interface EvolutionWebhookPayload {
