@@ -147,7 +147,7 @@ export default async function AnalyticsPage({
                 <span className="text-right">Ticket</span>
               </div>
 
-              {services.map(row => (
+              {(services as ServiceRow[]).map(row => (
                 <div
                   key={row.servicio}
                   className="grid px-4 py-2.5"
