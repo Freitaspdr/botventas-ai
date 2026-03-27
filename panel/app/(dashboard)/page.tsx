@@ -430,7 +430,7 @@ export default async function DashboardPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px]" style={{ color: '#a1a1aa' }}>
-                  Plan <span style={{ color: '#a1a1aa' }}>{revenue.plan}</span>
+                  Plan <span style={{ color: '#a1a1aa' }}>{String(revenue.plan)}</span>
                 </span>
                 <span className="text-[11px]" style={{ color: '#a1a1aa' }}>
                   {revenue.convUsadas}/{revenue.convLimite} conv.

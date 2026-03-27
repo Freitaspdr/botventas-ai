@@ -50,7 +50,7 @@ export async function getDashboardRevenue() {
   const convUsadas  = Number(r?.conv_usadas  ?? 0);
   const cambio = mesAnterior > 0 ? Math.round(((mesActual - mesAnterior) / mesAnterior) * 100) : 0;
   const roi    = convUsadas > 0 && mesActual > 0 ? Math.round(mesActual / (convUsadas * 0.5)) : 0;
-  return { mesActual, mesAnterior, cambio, roi, plan: r?.plan_nombre ?? 'starter', convUsadas, convLimite: Number(r?.conv_limite ?? 500) };
+  return { mesActual, mesAnterior, cambio, roi, plan: String(r?.plan_nombre ?? 'starter'), convUsadas, convLimite: Number(r?.conv_limite ?? 500) };
 }
 
 export async function getDashboardFeed() {
