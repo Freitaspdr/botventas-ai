@@ -10,15 +10,20 @@ const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
  * Devuelve el texto transcrito, o null si falla.
  */
 export async function transcribeAudio(
-  messageKey: { id: string; remoteJid: string; fromMe: boolean },
+  messageKey:     { id: string; remoteJid: string; fromMe: boolean },
+  messageContent: Record<string, unknown> | undefined,
   instance: string,
   apiUrl:   string,
   apiKey:   string,
 ): Promise<string | null> {
   // 1. Descargar audio en base64 desde Evolution API
+  // Evolution API v2 requiere el objeto completo { key, message }
   const b64Response = await axios.post(
     `${apiUrl}/chat/getBase64FromMediaMessage/${instance}`,
-    { key: messageKey },
+    {
+      message: { key: messageKey, message: messageContent ?? {} },
+      convertToMp4: false,
+    },
     { headers: { apikey: apiKey, 'Content-Type': 'application/json' } },
   );
 

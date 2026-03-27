@@ -108,6 +108,7 @@ webhookRouter.post('/webhook', async (req: Request, res: Response) => {
         console.log(`🎙️  Audio recibido de ${clienteTel}, transcribiendo...`);
         messageText = await transcribeAudio(
           payload.data.key,
+          payload.data.message as Record<string, unknown> | undefined,
           evoCfg.instance, evoCfg.url, evoCfg.key,
         );
       }
