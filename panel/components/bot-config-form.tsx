@@ -3,12 +3,18 @@
 import { useState } from 'react';
 import { PromptGenerator } from './prompt-generator';
 
-type EmpresaFormData = Record<string, any> & {
+type EmpresaFormValue = string | number | boolean | null | undefined;
+
+type EmpresaFormData = Record<string, EmpresaFormValue> & {
   plan?: string;
   conv_limite?: number;
   conv_usadas?: number;
   has_evolution_api_key?: boolean;
 };
+
+function textValue(value: EmpresaFormValue) {
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+}
 
 export function BotConfigForm({
   empresa,
@@ -25,8 +31,8 @@ export function BotConfigForm({
   const [showGenerator, setShowGenerator] = useState(false);
   const [newEvolutionApiKey, setNewEvolutionApiKey] = useState('');
 
-  function set(key: string, value: unknown) {
-    setForm((prev: Record<string, unknown>) => ({ ...prev, [key]: value }));
+  function set(key: string, value: EmpresaFormValue) {
+    setForm((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   }
 
@@ -153,7 +159,7 @@ export function BotConfigForm({
           <label style={labelStyle}>Nombre del bot</label>
           <input
             style={inputStyle}
-            value={form.bot_nombre || ''}
+            value={textValue(form.bot_nombre)}
             onChange={e => set('bot_nombre', e.target.value)}
             placeholder="Carlos"
           />
@@ -162,7 +168,7 @@ export function BotConfigForm({
           <label style={labelStyle}>Tono</label>
           <select
             style={{ ...inputStyle, cursor: 'pointer' }}
-            value={form.bot_tono || 'amigable'}
+            value={textValue(form.bot_tono) || 'amigable'}
             onChange={e => set('bot_tono', e.target.value)}
           >
             <option value="amigable">Amigable</option>
@@ -173,7 +179,7 @@ export function BotConfigForm({
       </div>
       <div>
         <label style={labelStyle}>Ciudad</label>
-        <input style={inputStyle} value={form.bot_ciudad || ''} onChange={e => set('bot_ciudad', e.target.value)} placeholder="Madrid" />
+        <input style={inputStyle} value={textValue(form.bot_ciudad)} onChange={e => set('bot_ciudad', e.target.value)} placeholder="Madrid" />
       </div>
 
       {/* ── Sección 2: Catálogo (solo superadmin) ── */}
@@ -190,7 +196,7 @@ export function BotConfigForm({
               <label style={labelStyle}>{label}</label>
               <textarea
                 style={{ ...textareaStyle, minHeight: rows * 22 } as React.CSSProperties}
-                value={form[key] || ''}
+                value={textValue(form[key])}
                 onChange={e => set(key, e.target.value)}
                 placeholder={placeholder}
                 rows={rows}
@@ -206,7 +212,7 @@ export function BotConfigForm({
         <label style={labelStyle}>WhatsApp del encargado</label>
         <input
           style={inputStyle}
-          value={form.encargado_tel || ''}
+          value={textValue(form.encargado_tel)}
           onChange={e => set('encargado_tel', e.target.value)}
           placeholder="34612345678 (sin + ni espacios)"
         />
@@ -230,7 +236,7 @@ export function BotConfigForm({
             <button
               type="button"
               role="switch"
-              aria-checked={!!form[key]}
+              aria-checked={Boolean(form[key])}
               onClick={() => set(key, !form[key])}
               className="relative flex-shrink-0 w-9 h-5 rounded-full transition-colors"
               style={{ background: form[key] ? '#4f8b5f' : '#eadcc6' }}
@@ -257,7 +263,7 @@ export function BotConfigForm({
           {isSuperAdmin ? (
             <select
               style={{ ...inputStyle, width: 'auto', cursor: 'pointer' }}
-              value={form.plan || 'starter'}
+              value={textValue(form.plan) || 'starter'}
               onChange={e => set('plan', e.target.value)}
             >
               <option value="starter">Starter — 500 conv</option>
@@ -266,7 +272,7 @@ export function BotConfigForm({
             </select>
           ) : (
             <span className="text-[13px]" style={{ color: '#8a785d' }}>
-              Plan <span className="font-medium capitalize" style={{ color: '#2c2418' }}>{form.plan}</span>
+              Plan <span className="font-medium capitalize" style={{ color: '#2c2418' }}>{textValue(form.plan)}</span>
             </span>
           )}
           <span className="text-[12px]" style={{ color: '#8a785d' }}>
@@ -290,7 +296,7 @@ export function BotConfigForm({
               <label style={labelStyle}>URL del servidor Evolution API</label>
               <input
                 style={{ ...inputStyle, fontFamily: 'monospace' }}
-                value={form.evolution_api_url || ''}
+                value={textValue(form.evolution_api_url)}
                 onChange={e => set('evolution_api_url', e.target.value)}
                 placeholder="http://localhost:8080  (vacío = usar servidor global)"
               />
@@ -318,7 +324,7 @@ export function BotConfigForm({
               <label style={labelStyle}>Nombre de instancia</label>
               <input
                 style={{ ...inputStyle, fontFamily: 'monospace' }}
-                value={form.evolution_instance || ''}
+                value={textValue(form.evolution_instance)}
                 onChange={e => set('evolution_instance', e.target.value)}
                 placeholder="beleti-bot"
               />

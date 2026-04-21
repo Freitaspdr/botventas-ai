@@ -24,6 +24,20 @@ Thumbs.db
 # Claude Code settings (local)
 .claude/
 
+# Local workspace files
+.obsidian/
+.playwright-mcp/
+.vercel/
+Backups/
+Media/
+*.rpp
+*.rpp-bak
+*.base
+*.canvas
+qr-*.png
+qr-code.png
+evo-logs.txt
+
 # TypeScript
 *.tsbuildinfo
 
