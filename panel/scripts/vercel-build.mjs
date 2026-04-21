@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const cwd = process.cwd();
@@ -48,10 +48,14 @@ const candidates = [
   },
 ];
 
-if (cwd.replaceAll('\\', '/').startsWith('/vercel/')) {
+const isVercelBuild = cwd.replaceAll('\\', '/').startsWith('/vercel/');
+const cwdNextDir = join(cwd, '.next');
+const vercelRootNextDir = join(dirname(cwd), '.next');
+
+if (isVercelBuild) {
   candidates.push({
-    source: join(dirname(cwd), '.next', 'routes-manifest.json'),
-    target: join(dirname(cwd), '.next', 'routes-manifest-deterministic.json'),
+    source: join(vercelRootNextDir, 'routes-manifest.json'),
+    target: join(vercelRootNextDir, 'routes-manifest-deterministic.json'),
   });
 }
 
@@ -65,6 +69,16 @@ function syncRoutesManifest() {
       writeFileSync(target, placeholderManifest);
     }
   }
+}
+
+function syncVercelRootBuildOutput() {
+  if (!isVercelBuild || !existsSync(cwdNextDir) || cwdNextDir === vercelRootNextDir) {
+    return;
+  }
+
+  rmSync(vercelRootNextDir, { recursive: true, force: true });
+  cpSync(cwdNextDir, vercelRootNextDir, { recursive: true, force: true });
+  syncRoutesManifest();
 }
 
 const childEnv = { ...process.env };
@@ -82,6 +96,9 @@ const child = spawn(process.execPath, [nextBin, 'build', '--webpack'], {
 child.on('exit', (code, signal) => {
   clearInterval(interval);
   syncRoutesManifest();
+  if ((code ?? 1) === 0) {
+    syncVercelRootBuildOutput();
+  }
   console.log(`Ensured Vercel routes manifest at ${candidates.map(({ target }) => target).join(', ')}`);
 
   if (signal) {
