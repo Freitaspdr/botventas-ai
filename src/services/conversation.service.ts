@@ -228,10 +228,11 @@ async function registerLead(
   clienteNombre?: string,
 ): Promise<void> {
   const nivel = tag === AI_TAGS.HOT_LEAD ? 'alto' : 'medio';
+  const score = tag === AI_TAGS.HOT_LEAD ? 85 : 55;
 
   await db.query(
-    `INSERT INTO leads (empresa_id, contacto_id, conv_id, cliente_tel, cliente_nombre, nivel)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO leads (empresa_id, contacto_id, conv_id, cliente_tel, cliente_nombre, nivel, score)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (empresa_id, cliente_tel)
      DO UPDATE
        SET contacto_id = COALESCE(leads.contacto_id, EXCLUDED.contacto_id),
@@ -242,8 +243,9 @@ async function registerLead(
              WHEN leads.nivel = 'medio' OR EXCLUDED.nivel = 'medio' THEN 'medio'
              ELSE 'bajo'
            END,
+           score = GREATEST(COALESCE(leads.score, 0), EXCLUDED.score),
            actualizado_en = NOW()`,
-    [empresa.id, conv.contacto_id, conv.id, conv.cliente_tel, clienteNombre ?? conv.cliente_nombre, nivel],
+    [empresa.id, conv.contacto_id, conv.id, conv.cliente_tel, clienteNombre ?? conv.cliente_nombre, nivel, score],
   );
 }
 

@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabase() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
-}
+import { getSupabase } from '@/lib/db';
 
 const PLAN_LIMITS: Record<string, number> = {
   starter:    500,
@@ -20,6 +16,23 @@ const ALLOWED_FIELDS = [
   'plan',
 ];
 
+const EMPRESA_SELECT = `
+  id, nombre, whatsapp_num, plan, conv_limite, conv_usadas,
+  bot_nombre, bot_tono, bot_objetivo, bot_productos, bot_horarios, bot_ciudad, bot_extra,
+  encargado_tel, crm_api_token, evolution_instance, evolution_api_url, evolution_api_key,
+  notif_hot_leads, notif_transfers, notif_nuevos, notif_resumen
+`;
+
+function safeEmpresaResponse(data: unknown) {
+  const { evolution_api_key: secret, ...safeData } =
+    data as { evolution_api_key?: string | null } & Record<string, unknown>;
+
+  return {
+    ...safeData,
+    has_evolution_api_key: !!secret,
+  };
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if ((session?.user as { rol?: string })?.rol !== 'superadmin') {
@@ -28,21 +41,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const { data, error } = await getSupabase()
     .from('empresas')
-    .select(`
-      id, nombre, whatsapp_num, plan, conv_limite, conv_usadas,
-      bot_nombre, bot_tono, bot_objetivo, bot_productos, bot_horarios, bot_ciudad, bot_extra,
-      encargado_tel, crm_api_token, evolution_instance, evolution_api_url, evolution_api_key,
-      notif_hot_leads, notif_transfers, notif_nuevos, notif_resumen
-    `)
+    .select(EMPRESA_SELECT)
     .eq('id', id)
     .single();
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const { evolution_api_key: _secret, ...safeData } =
-    data as unknown as { evolution_api_key?: string } & Record<string, unknown>;
-  return NextResponse.json({
-    ...safeData,
-    has_evolution_api_key: !!_secret,
-  });
+  return NextResponse.json(safeEmpresaResponse(data));
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -70,9 +73,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     .from('empresas')
     .update(update)
     .eq('id', id)
-    .select()
+    .select(EMPRESA_SELECT)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(safeEmpresaResponse(data));
 }

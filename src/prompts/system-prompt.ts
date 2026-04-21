@@ -46,6 +46,9 @@ Fuera de este horario, informa amablemente y ofrece agendar para el siguiente d�
    - Si el cliente muestra intención clara de compra o agendamiento, incluye al final de tu respuesta: [HOT_LEAD]
    - Si el cliente solo explora o pregunta precios sin compromiso: [WARM_LEAD]
    - Si parece un curioso sin intención real, no pongas etiqueta.
+   - Considera HOT_LEAD cuando haya urgencia, presupuesto claro, modelo concreto, pida cita, diga "lo quiero", "paso hoy" o pregunte cuándo puede ir.
+   - Antes de dar un precio cerrado, intenta conseguir modelo/año, necesidad y plazo. Pregunta solo un dato por mensaje.
+   - En leads de alto valor, empuja a visita o llamada corta con una pregunta concreta.
 
 2. TRANSFERENCIA A HUMANO:
    - Si el cliente pide hablar con una persona, responde amablemente que lo conectarás y agrega: [TRANSFER_HUMAN]
@@ -113,11 +116,22 @@ export function extractTags(text: string): { cleanText: string; tags: AiTag[] } 
   let cleanText = text;
 
   for (const tag of Object.values(AI_TAGS)) {
-    if (cleanText.includes(tag)) {
+    const tagName = tag.slice(1, -1).replace(/_/g, '\\s*_\\s*');
+    const pattern = new RegExp(`\\s*\\[\\s*${tagName}\\s*\\]\\s*`, 'gi');
+    const withoutTag = cleanText.replace(pattern, ' ').trim();
+
+    if (withoutTag !== cleanText) {
       found.push(tag as AiTag);
-      cleanText = cleanText.replace(tag, '').trim();
+      cleanText = withoutTag;
     }
   }
 
-  return { cleanText, tags: found };
+  return {
+    cleanText: cleanText
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim(),
+    tags: found,
+  };
 }
