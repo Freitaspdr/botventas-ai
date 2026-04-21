@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type ConnState = 'loading' | 'no_instance' | 'disconnected' | 'connecting' | 'qr_ready' | 'connected' | 'error';
 
@@ -11,13 +12,13 @@ interface Props {
 
 function StatusBadge({ state }: { state: ConnState }) {
   const map: Record<ConnState, { bg: string; color: string; label: string }> = {
-    loading:       { bg: 'rgba(255,255,255,0.06)', color: '#a1a1aa', label: 'Cargando...' },
-    no_instance:   { bg: 'rgba(255,255,255,0.06)', color: '#a1a1aa', label: 'Sin configurar' },
-    disconnected:  { bg: 'rgba(245,158,11,0.15)',  color: '#fbbf24', label: 'Desconectado' },
-    connecting:    { bg: 'rgba(139,92,246,0.15)',  color: '#a78bfa', label: 'Conectando...' },
-    qr_ready:      { bg: 'rgba(59,130,246,0.15)',  color: '#60a5fa', label: 'Escanea el QR' },
-    connected:     { bg: 'rgba(34,197,94,0.15)',   color: '#4ade80', label: 'Conectado' },
-    error:         { bg: 'rgba(239,68,68,0.15)',   color: '#f87171', label: 'Error' },
+    loading:       { bg: '#f4ead9', color: '#8a785d', label: 'Cargando...' },
+    no_instance:   { bg: '#f4ead9', color: '#8a785d', label: 'Sin configurar' },
+    disconnected:  { bg: '#f3e3bf', color: '#704a14', label: 'Desconectado' },
+    connecting:    { bg: '#eadcc6', color: '#6f5632', label: 'Conectando...' },
+    qr_ready:      { bg: '#f3e3bf', color: '#704a14', label: 'Escanea el QR' },
+    connected:     { bg: '#dfeedd', color: '#3f744d', label: 'Conectado' },
+    error:         { bg: '#f8ded9', color: '#a33b36', label: 'Error' },
   };
   const s = map[state];
   return (
@@ -33,7 +34,7 @@ function StatusBadge({ state }: { state: ConnState }) {
 export function EvolutionConnector({ instance, empresaId }: Props) {
   const qs = empresaId ? `&empresaId=${empresaId}` : '';
   const apiBase = `/api/evolution`;
-  const [state, setState] = useState<ConnState>('loading');
+  const [state, setState] = useState<ConnState>(instance ? 'loading' : 'no_instance');
   const [qrBase64, setQrBase64] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
   }
 
-  async function checkStatus() {
+  const checkStatus = useCallback(async () => {
     try {
       const res = await fetch(`${apiBase}?action=status${qs}`);
       if (res.status === 400) { setState('no_instance'); return; }
@@ -68,9 +69,9 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
       setState('error');
       setError('No se pudo conectar con la API');
     }
-  }
+  }, [apiBase, qs]);
 
-  async function fetchQr() {
+  const fetchQr = useCallback(async () => {
     try {
       const res = await fetch(`${apiBase}?action=qr${qs}`);
       const data = await res.json();
@@ -94,12 +95,12 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
     } catch {
       // Keep trying
     }
-  }
+  }, [apiBase, qs]);
 
   function startPolling() {
     clearTimers();
-    fetchQr();
-    intervalRef.current = setInterval(fetchQr, 5000);
+    void fetchQr();
+    intervalRef.current = setInterval(() => { void fetchQr(); }, 5000);
     countdownRef.current = setInterval(() => setCountdown(c => c > 0 ? c - 1 : 30), 1000);
   }
 
@@ -159,42 +160,50 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
 
   useEffect(() => {
     if (instance) {
-      checkStatus();
+      const timer = setTimeout(() => {
+        void checkStatus();
+      }, 0);
+      return () => {
+        clearTimeout(timer);
+        clearTimers();
+      };
     } else {
-      setState('no_instance');
+      clearTimers();
     }
     return clearTimers;
-  }, [instance]);
+  }, [instance, checkStatus]);
+
+  const effectiveState: ConnState = instance ? state : 'no_instance';
 
   return (
     <div
       className="rounded-xl p-4 flex flex-col gap-4"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.07)' }}
+      style={{ background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))', border: '1px solid rgba(218,197,160,0.72)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[13px] font-medium" style={{ color: '#fafafa' }}>WhatsApp</p>
-          <p className="text-[11px] mt-0.5" style={{ color: '#71717a' }}>
+          <p className="text-[13px] font-medium" style={{ color: '#2c2418' }}>WhatsApp</p>
+          <p className="text-[11px] mt-0.5" style={{ color: '#8a785d' }}>
             {instance ? `Instancia: ${instance}` : 'Sin instancia asignada'}
           </p>
         </div>
-        <StatusBadge state={state} />
+        <StatusBadge state={effectiveState} />
       </div>
 
       {/* Connected state */}
-      {state === 'connected' && (
+      {effectiveState === 'connected' && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#22c55e' }} />
-            <span className="text-[12px]" style={{ color: '#a1a1aa' }}>
+            <span className="text-[12px]" style={{ color: '#8a785d' }}>
               {phoneNumber ? `+${phoneNumber}` : 'Conectado'}
             </span>
           </div>
           <button
             onClick={handleDisconnect}
-            className="text-[11px] px-2.5 py-1 rounded-lg transition-colors hover:bg-white/[0.06]"
-            style={{ border: '0.5px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+            className="text-[11px] px-2.5 py-1 rounded-lg transition-colors hover:bg-[#f8ded9]"
+            style={{ border: '1px solid rgba(194,65,60,0.22)', color: '#a33b36' }}
           >
             Desconectar
           </button>
@@ -202,42 +211,49 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
       )}
 
       {/* QR code */}
-      {(state === 'qr_ready' || state === 'connecting') && (
+      {(effectiveState === 'qr_ready' || effectiveState === 'connecting') && (
         <div className="flex flex-col items-center gap-3">
-          {qrBase64 ? (
-            <>
-              <img src={qrBase64} alt="QR WhatsApp" className="rounded-lg" style={{ width: 200, height: 200 }} />
-              <p className="text-[11px] text-center" style={{ color: '#a1a1aa' }}>
+            {qrBase64 ? (
+              <>
+                <Image
+                  src={qrBase64}
+                  alt="QR WhatsApp"
+                  className="rounded-lg"
+                  width={200}
+                  height={200}
+                  unoptimized
+                />
+              <p className="text-[11px] text-center" style={{ color: '#8a785d' }}>
                 Abre WhatsApp → Dispositivos vinculados → Vincular un dispositivo
               </p>
-              <p className="text-[10px]" style={{ color: '#71717a' }}>
+              <p className="text-[10px]" style={{ color: '#9a8a72' }}>
                 Actualizando en {countdown}s
               </p>
             </>
           ) : (
             <div className="flex items-center gap-2 py-4">
-              <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#a78bfa', borderTopColor: 'transparent' }} />
-              <span className="text-[12px]" style={{ color: '#a1a1aa' }}>Generando QR...</span>
+              <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#b8862f', borderTopColor: 'transparent' }} />
+              <span className="text-[12px]" style={{ color: '#8a785d' }}>Generando QR...</span>
             </div>
           )}
         </div>
       )}
 
       {/* Disconnected — connect button */}
-      {state === 'disconnected' && (
+      {effectiveState === 'disconnected' && (
         <button
           onClick={handleConnect}
           className="w-full rounded-lg py-2.5 text-[13px] font-medium transition-colors"
-          style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '0.5px solid rgba(34,197,94,0.2)' }}
+          style={{ background: '#dfeedd', color: '#3f744d', border: '1px solid rgba(79,139,95,0.18)' }}
         >
           Conectar WhatsApp
         </button>
       )}
 
       {/* No instance — create flow */}
-      {state === 'no_instance' && (
+      {effectiveState === 'no_instance' && (
         <div className="flex flex-col gap-2">
-          <p className="text-[12px]" style={{ color: '#a1a1aa' }}>
+          <p className="text-[12px]" style={{ color: '#8a785d' }}>
             Introduce un nombre único para tu instancia (sin espacios):
           </p>
           <div className="flex gap-2">
@@ -246,13 +262,13 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
               onChange={e => setNewInstance(e.target.value.replace(/\s/g, '-').toLowerCase())}
               placeholder="mi-negocio"
               className="flex-1 rounded-lg px-3 py-1.5 text-[12px] outline-none"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', color: '#fafafa' }}
+              style={{ background: '#fffdfa', border: '1px solid rgba(218,197,160,0.68)', color: '#2c2418' }}
             />
             <button
               onClick={handleCreate}
               disabled={!newInstance.trim()}
               className="rounded-lg px-3 py-1.5 text-[12px] font-medium disabled:opacity-40 transition-colors"
-              style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '0.5px solid rgba(59,130,246,0.2)' }}
+              style={{ background: 'linear-gradient(135deg, #d7ac55, #9b6a24)', color: '#fffaf0', border: '1px solid rgba(151,102,31,0.22)' }}
             >
               Crear
             </button>
@@ -261,13 +277,13 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
       )}
 
       {/* Error */}
-      {state === 'error' && (
+      {effectiveState === 'error' && (
         <div className="flex items-center justify-between">
-          <p className="text-[11px]" style={{ color: '#f87171' }}>{error || 'Error desconocido'}</p>
+          <p className="text-[11px]" style={{ color: '#a33b36' }}>{error || 'Error desconocido'}</p>
           <button
-            onClick={() => { setState('loading'); checkStatus(); }}
+            onClick={() => { setState('loading'); void checkStatus(); }}
             className="text-[11px] px-2.5 py-1 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
+            style={{ background: '#f4ead9', color: '#8a785d' }}
           >
             Reintentar
           </button>
@@ -275,11 +291,11 @@ export function EvolutionConnector({ instance, empresaId }: Props) {
       )}
 
       {/* Refresh button when loading or disconnected */}
-      {(state === 'loading' || state === 'disconnected') && (
+      {(effectiveState === 'loading' || effectiveState === 'disconnected') && (
         <button
-          onClick={() => { setState('loading'); checkStatus(); }}
+          onClick={() => { setState('loading'); void checkStatus(); }}
           className="text-[11px]"
-          style={{ color: '#52525b' }}
+          style={{ color: '#9a8a72' }}
         >
           Refrescar estado
         </button>

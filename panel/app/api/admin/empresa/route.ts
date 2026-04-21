@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createClient } from '@supabase/supabase-js';
+import { DEFAULT_EVOLUTION_API_URL } from '@/lib/server-config';
 
 function getSupabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
       plan: plan || 'starter',
       email_contacto: email_contacto || null,
       evolution_instance: evolution_instance || null,
-      evolution_api_url: evolution_api_url || 'http://46.225.183.139:8080',
+      evolution_api_url: evolution_api_url || DEFAULT_EVOLUTION_API_URL,
       evolution_api_key: evolution_api_key || null,
       conv_limite: plan === 'pro' ? 2000 : plan === 'enterprise' ? 999999 : 500,
     })

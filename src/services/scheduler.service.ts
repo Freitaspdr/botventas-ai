@@ -5,7 +5,6 @@
 
 import { db } from '../db/client';
 import { sendText, getEvolutionConfigForEmpresa } from './whatsapp.service';
-import { saveMessage } from './conversation.service';
 
 interface DeferredMessage {
   id:          string;

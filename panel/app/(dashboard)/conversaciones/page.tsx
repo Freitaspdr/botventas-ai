@@ -15,30 +15,37 @@ export default async function ConversacionesPage({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-medium tracking-tight" style={{ color: '#fafafa' }}>
-          Conversaciones
-        </h1>
-        {activas > 0 && (
-          <span
-            className="text-[9px] font-medium px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80' }}
-          >
-            {activas} activas
-          </span>
-        )}
+      <div
+        className="rounded-[28px] p-6"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,253,248,0.98), rgba(246,232,207,0.92) 56%, rgba(220,190,130,0.36))',
+          border: '1px solid rgba(218,197,160,0.72)',
+          boxShadow: '0 20px 52px rgba(116,82,28,0.1)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-semibold tracking-[-0.05em]" style={{ color: '#2c2418' }}>
+            Conversaciones
+          </h1>
+          {activas > 0 && (
+            <span
+              className="rounded-full px-3 py-1 text-[10px] font-medium"
+              style={{ background: '#dfeedd', color: '#3f744d' }}
+            >
+              {activas} activas
+            </span>
+          )}
+        </div>
+        <p className="mt-3 text-[14px]" style={{ color: '#6f604a' }}>
+          Revisa actividad reciente, estado del lead y seguimientos activos desde una sola tabla.
+        </p>
       </div>
-
-      {/* Filters (client component for interactivity) */}
       <ConversacionesFilters
         estado={sp.estado}
         desde={sp.desde}
         hasta={sp.hasta}
         q={sp.q}
       />
-
-      {/* Table */}
       <ConversationTable conversations={conversations} />
     </div>
   );

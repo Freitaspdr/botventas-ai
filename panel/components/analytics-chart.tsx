@@ -11,9 +11,9 @@ interface ChartPoint {
 }
 
 const SERIES = [
-  { key: 'conversaciones' as const, color: '#3b82f6', label: 'Conversaciones' },
-  { key: 'leads'          as const, color: '#a78bfa', label: 'Leads' },
-  { key: 'citas'          as const, color: '#22c55e', label: 'Citas' },
+  { key: 'conversaciones' as const, color: '#b8862f', label: 'Conversaciones' },
+  { key: 'leads'          as const, color: '#d9a441', label: 'Leads' },
+  { key: 'citas'          as const, color: '#4f8b5f', label: 'Citas' },
 ] as const;
 
 function polyline(data: ChartPoint[], key: keyof ChartPoint, w: number, h: number, pad: number) {
@@ -44,18 +44,18 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.05)' }}
+      style={{ background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))', border: '1px solid rgba(218,197,160,0.72)' }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: '0.5px solid rgba(255,255,255,0.05)' }}
+        style={{ borderBottom: '1px solid rgba(218,197,160,0.62)' }}
       >
         <div className="flex items-center gap-4">
-          <span className="text-[13px]" style={{ color: '#a1a1aa' }}>Evolución</span>
+          <span className="text-[13px]" style={{ color: '#2c2418' }}>Evolución</span>
           <div className="flex items-center gap-3">
             {SERIES.map(s => (
-              <span key={s.key} className="flex items-center gap-1 text-[10px]" style={{ color: '#a1a1aa' }}>
+              <span key={s.key} className="flex items-center gap-1 text-[10px]" style={{ color: '#8a785d' }}>
                 <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
                 {s.label}
               </span>
@@ -64,7 +64,7 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
         </div>
         <div
           className="flex items-center rounded-lg overflow-hidden"
-          style={{ border: '0.5px solid rgba(255,255,255,0.05)' }}
+          style={{ border: '1px solid rgba(218,197,160,0.62)' }}
         >
           {[7, 30, 90].map((d, i) => (
             <button
@@ -72,9 +72,9 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
               onClick={() => setDias(d)}
               className="px-2.5 py-1 text-[11px] transition-colors"
               style={{
-                background: dias === d ? 'rgba(255,255,255,0.06)' : 'transparent',
-                color:      dias === d ? '#fafafa' : '#a1a1aa',
-                borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.05)' : undefined,
+                background: dias === d ? '#f3e3bf' : 'transparent',
+                color:      dias === d ? '#704a14' : '#8a785d',
+                borderRight: i < 2 ? '1px solid rgba(218,197,160,0.62)' : undefined,
               }}
             >
               {d}d
@@ -85,7 +85,7 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
 
       {/* SVG chart */}
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-40 text-[12px]" style={{ color: '#71717a' }}>
+        <div className="flex items-center justify-center h-40 text-[12px]" style={{ color: '#8a785d' }}>
           Sin datos para este periodo
         </div>
       ) : (
@@ -104,7 +104,7 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
                 y1={PAD + t * (H - PAD * 2)}
                 x2={W - PAD}
                 y2={PAD + t * (H - PAD * 2)}
-                stroke="rgba(255,255,255,0.04)"
+                stroke="rgba(184,134,47,0.12)"
                 strokeWidth="1"
               />
             ))}
@@ -153,16 +153,16 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
           {hoverIdx !== null && data[hoverIdx] && (
             <div
               className="absolute top-4 right-8 rounded-lg px-3 py-2 flex flex-col gap-1 pointer-events-none"
-              style={{ background: '#1a1a1f', border: '0.5px solid rgba(255,255,255,0.08)' }}
+              style={{ background: '#fffdfa', border: '1px solid rgba(218,197,160,0.72)', boxShadow: '0 12px 30px rgba(116,82,28,0.14)' }}
             >
-              <p className="text-[10px] mb-0.5" style={{ color: '#a1a1aa' }}>
+              <p className="text-[10px] mb-0.5" style={{ color: '#8a785d' }}>
                 {new Date(data[hoverIdx].fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
               </p>
               {SERIES.map(s => (
                 <p key={s.key} className="text-[11px] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
-                  <span style={{ color: '#a1a1aa' }}>{s.label}:</span>
-                  <span style={{ color: '#fafafa' }}>{data[hoverIdx][s.key]}</span>
+                  <span style={{ color: '#8a785d' }}>{s.label}:</span>
+                  <span style={{ color: '#2c2418' }}>{data[hoverIdx][s.key]}</span>
                 </p>
               ))}
             </div>
@@ -171,7 +171,7 @@ export function AnalyticsChart({ data, dias }: { data: ChartPoint[]; dias: numbe
           {/* X axis dates */}
           <div className="flex justify-between mt-1 px-0.5">
             {[data[0], data[Math.floor(data.length / 2)], data[data.length - 1]].filter(Boolean).map((d, i) => (
-              <span key={i} className="text-[9px]" style={{ color: '#71717a' }}>
+              <span key={i} className="text-[9px]" style={{ color: '#8a785d' }}>
                 {new Date(d.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
               </span>
             ))}

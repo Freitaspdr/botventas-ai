@@ -1,8 +1,17 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { IBM_Plex_Mono, Manrope } from 'next/font/google';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'] });
+const manrope = Manrope({
+  variable: '--font-sans',
+  subsets: ['latin'],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  weight: ['400', '500'],
+});
 
 export const metadata: Metadata = {
   title: 'BotVentas AI · Panel',
@@ -11,11 +20,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="h-full antialiased dark">
-      <body
-        className={`${geist.className} min-h-full`}
-        style={{ background: '#09090b', color: '#fafafa' }}
-      >
+    <html lang="es" className={`h-full antialiased ${manrope.variable} ${plexMono.variable}`}>
+      <body className="min-h-full">
         {children}
       </body>
     </html>

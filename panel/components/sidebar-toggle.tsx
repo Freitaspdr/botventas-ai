@@ -8,12 +8,17 @@ export function SidebarToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors hover:bg-white/[0.04]"
+      className="flex h-11 w-11 items-center justify-center rounded-[16px] transition-colors hover:bg-[#f3e5ce]"
       title={open ? 'Cerrar menú' : 'Abrir menú'}
+      style={{
+        background: 'rgba(255,253,248,0.86)',
+        border: '1px solid rgba(218,197,160,0.72)',
+        color: '#6f5632',
+      }}
     >
       {open
-        ? <X size={15} className="text-[#a1a1aa]" strokeWidth={1.5} />
-        : <Menu size={15} className="text-[#a1a1aa]" strokeWidth={1.5} />
+        ? <X size={16} strokeWidth={1.8} />
+        : <Menu size={16} strokeWidth={1.8} />
       }
     </button>
   );

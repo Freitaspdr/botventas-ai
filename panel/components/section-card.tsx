@@ -16,28 +16,27 @@ export function SectionCard({
   headerRight,
 }: SectionCardProps) {
   return (
-    <div
-      className="rounded-xl flex flex-col overflow-hidden"
-      style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: '0.5px solid rgba(255,255,255,0.05)',
-      }}
-    >
-      {/* Header */}
+    <div className="panel-surface flex flex-col overflow-hidden rounded-[28px]">
       <div
-        className="flex items-center justify-between px-3 py-2.5"
-        style={{ borderBottom: '0.5px solid rgba(255,255,255,0.05)' }}
+        className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: '1px solid rgba(218,197,160,0.58)' }}
       >
-        <span className="text-[13px]" style={{ color: '#a1a1aa' }}>
-          {title}
-        </span>
+        <div>
+          <span className="text-[14px] font-semibold tracking-tight" style={{ color: '#2c2418' }}>
+            {title}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {headerRight}
           {viewAllHref && (
             <Link
               href={viewAllHref}
-              className="text-[11px] transition-colors hover:text-[#a1a1aa]"
-              style={{ color: '#71717a' }}
+              className="rounded-full px-3 py-1.5 text-[11px] transition-colors hover:bg-[#f3e5ce]"
+              style={{
+                color: '#79521d',
+                background: 'rgba(248,239,224,0.72)',
+                border: '1px solid rgba(218,197,160,0.62)',
+              }}
             >
               {viewAllLabel}
             </Link>
@@ -45,10 +44,7 @@ export function SectionCard({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }

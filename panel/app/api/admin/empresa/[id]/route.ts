@@ -28,11 +28,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const { data, error } = await getSupabase()
     .from('empresas')
-    .select('*')
+    .select(`
+      id, nombre, whatsapp_num, plan, conv_limite, conv_usadas,
+      bot_nombre, bot_tono, bot_objetivo, bot_productos, bot_horarios, bot_ciudad, bot_extra,
+      encargado_tel, crm_api_token, evolution_instance, evolution_api_url, evolution_api_key,
+      notif_hot_leads, notif_transfers, notif_nuevos, notif_resumen
+    `)
     .eq('id', id)
     .single();
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data);
+  const { evolution_api_key: _secret, ...safeData } =
+    data as unknown as { evolution_api_key?: string } & Record<string, unknown>;
+  return NextResponse.json({
+    ...safeData,
+    has_evolution_api_key: !!_secret,
+  });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

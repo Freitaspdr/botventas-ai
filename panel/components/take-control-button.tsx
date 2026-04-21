@@ -9,12 +9,14 @@ interface Props {
   variant?: 'icon' | 'full';
 }
 
-export function TakeControlButton({ convId, tel, variant = 'icon' }: Props) {
+export function TakeControlButton({ convId, variant = 'icon' }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleTransfer() {
-    if (!confirm('¿Transferir esta conversación a humano? El bot dejará de responder.')) return;
+    if (!confirm('¿Tomar control de esta conversación? El bot dejará de responder y el inbox quedará en modo humano.')) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -23,10 +25,6 @@ export function TakeControlButton({ convId, tel, variant = 'icon' }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: 'transferida' }),
       });
-
-      // Open WhatsApp Web in new tab
-      const phone = tel.replace(/\D/g, '');
-      window.open(`https://wa.me/${phone}`, '_blank');
 
       router.refresh();
     } finally {
@@ -39,10 +37,10 @@ export function TakeControlButton({ convId, tel, variant = 'icon' }: Props) {
       <button
         onClick={handleTransfer}
         disabled={loading}
-        className="w-full rounded-lg py-2 text-[12px] font-medium transition-colors hover:opacity-90 disabled:opacity-50"
-        style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171' }}
+        className="w-full rounded-[16px] py-2.5 text-[12px] font-medium transition-colors hover:opacity-90 disabled:opacity-50"
+        style={{ background: '#f8ded9', color: '#a33b36' }}
       >
-        {loading ? 'Transfiriendo…' : 'Transferir a humano'}
+        {loading ? 'Tomando control...' : 'Tomar control del chat'}
       </button>
     );
   }
@@ -51,10 +49,10 @@ export function TakeControlButton({ convId, tel, variant = 'icon' }: Props) {
     <button
       onClick={handleTransfer}
       disabled={loading}
-      className="text-[11px] px-2.5 py-1.5 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50"
-      style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171' }}
+      className="rounded-[14px] px-3 py-2 text-[11px] transition-colors hover:opacity-90 disabled:opacity-50"
+      style={{ background: '#f8ded9', color: '#a33b36' }}
     >
-      {loading ? '…' : 'Tomar control'}
+      {loading ? '...' : 'Tomar control'}
     </button>
   );
 }

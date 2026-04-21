@@ -36,9 +36,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 });
   }
 
-  const allowedRols = ['admin', 'agente'];
+  const allowedRols = ['superadmin', 'admin', 'agente'];
   if (rol && !allowedRols.includes(rol)) {
-    return NextResponse.json({ error: 'Rol inválido (admin | agente)' }, { status: 400 });
+    return NextResponse.json({ error: 'Rol inválido (superadmin | admin | agente)' }, { status: 400 });
   }
 
   const password_hash = await bcrypt.hash(password, 12);

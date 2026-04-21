@@ -5,19 +5,6 @@ import { getAnalyticsOverview, getAnalyticsChart, getAnalyticsServices } from '@
 
 type SearchParams = { dias?: string };
 
-interface Overview {
-  totalLeads: number;
-  tasaRespuesta: number;
-  tasaCualificacion: number;
-  tasaCita: number;
-  tasaBot: number;
-  mensajesIA: number;
-  convTotal: number;
-  convTransfer: number;
-}
-
-interface ChartPoint { fecha: string; leads: number; citas: number; conversaciones: number }
-
 interface ServiceRow {
   servicio: string;
   leads: number;
@@ -50,7 +37,7 @@ export default async function AnalyticsPage({
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <h1 className="text-xl font-medium tracking-tight" style={{ color: '#fafafa' }}>
+      <h1 className="text-xl font-medium tracking-tight" style={{ color: '#2c2418' }}>
         Analytics
       </h1>
 
@@ -64,32 +51,32 @@ export default async function AnalyticsPage({
         <StatsCard
           label="Tasa respuesta"
           value={`${overview?.tasaRespuesta ?? 0}%`}
-          color="#60a5fa"
+          color="#b8862f"
           icon={<IconReply />}
         />
         <StatsCard
           label="Cualificación"
           value={`${overview?.tasaCualificacion ?? 0}%`}
-          color="#fbbf24"
+          color="#d9a441"
           icon={<IconStar />}
         />
         <StatsCard
           label="Lead → Cita"
           value={`${overview?.tasaCita ?? 0}%`}
-          color="#4ade80"
+          color="#4f8b5f"
           icon={<IconCal />}
         />
         <StatsCard
           label="Tasa bot"
           value={`${overview?.tasaBot ?? 100}%`}
-          color="#c4b5fd"
+          color="#8f7246"
           icon={<IconBot />}
           subtext={(overview?.tasaBot ?? 100) > 95 ? 'Indetectable' : undefined}
         />
       </div>
 
       {/* Chart */}
-      <Suspense fallback={<div className="h-52 rounded-xl" style={{ background: 'rgba(255,255,255,0.025)' }} />}>
+      <Suspense fallback={<div className="h-52 rounded-xl luxury-card" />}>
         <AnalyticsChart data={chartData ?? []} dias={dias} />
       </Suspense>
 
@@ -99,9 +86,9 @@ export default async function AnalyticsPage({
         {/* Bot performance (2 cols) */}
         <div
           className="col-span-2 rounded-xl p-4 flex flex-col gap-4"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))', border: '1px solid rgba(218,197,160,0.72)' }}
         >
-          <p className="text-[13px]" style={{ color: '#a1a1aa' }}>Rendimiento del bot</p>
+          <p className="text-[13px]" style={{ color: '#2c2418' }}>Rendimiento del bot</p>
           {[
             { label: 'Mensajes enviados por IA',         value: String(overview?.mensajesIA ?? 0) },
             { label: 'Conversaciones totales',            value: String(overview?.convTotal ?? 0) },
@@ -109,8 +96,8 @@ export default async function AnalyticsPage({
             { label: 'Sin intervención humana',           value: `${overview?.tasaBot ?? 100}%` },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between">
-              <span className="text-[12px]" style={{ color: '#a1a1aa' }}>{label}</span>
-              <span className="text-[13px] font-medium" style={{ color: '#a1a1aa' }}>{value}</span>
+              <span className="text-[12px]" style={{ color: '#8a785d' }}>{label}</span>
+              <span className="text-[13px] font-medium" style={{ color: '#2c2418' }}>{value}</span>
             </div>
           ))}
         </div>
@@ -118,17 +105,17 @@ export default async function AnalyticsPage({
         {/* Services table (3 cols) */}
         <div
           className="col-span-3 rounded-xl overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))', border: '1px solid rgba(218,197,160,0.72)' }}
         >
           <div
             className="px-4 py-3"
-            style={{ borderBottom: '0.5px solid rgba(255,255,255,0.05)' }}
+            style={{ borderBottom: '1px solid rgba(218,197,160,0.62)' }}
           >
-            <p className="text-[13px]" style={{ color: '#a1a1aa' }}>Servicios más demandados</p>
+            <p className="text-[13px]" style={{ color: '#2c2418' }}>Servicios más demandados</p>
           </div>
 
           {!services || services.length === 0 ? (
-            <p className="px-4 py-8 text-center text-[12px]" style={{ color: '#71717a' }}>Sin datos</p>
+            <p className="px-4 py-8 text-center text-[12px]" style={{ color: '#8a785d' }}>Sin datos</p>
           ) : (
             <div>
               {/* Table header */}
@@ -136,8 +123,8 @@ export default async function AnalyticsPage({
                 className="grid px-4 py-2 text-[9px] uppercase tracking-wider"
                 style={{
                   gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                  color: '#71717a',
-                  borderBottom: '0.5px solid rgba(255,255,255,0.04)',
+                  color: '#9a8153',
+                  borderBottom: '1px solid rgba(218,197,160,0.62)',
                 }}
               >
                 <span>Servicio</span>
@@ -153,14 +140,14 @@ export default async function AnalyticsPage({
                   className="grid px-4 py-2.5"
                   style={{
                     gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                    borderBottom: '0.5px solid rgba(255,255,255,0.03)',
+                    borderBottom: '1px solid rgba(234,220,198,0.72)',
                   }}
                 >
-                  <span className="text-[12px] truncate" style={{ color: '#e4e4e7' }}>{row.servicio}</span>
-                  <span className="text-[12px] text-right" style={{ color: '#a1a1aa' }}>{row.leads}</span>
-                  <span className="text-[12px] text-right" style={{ color: '#60a5fa' }}>{row.citas}</span>
-                  <span className="text-[12px] text-right" style={{ color: '#4ade80' }}>{row.cerrados}</span>
-                  <span className="text-[12px] text-right" style={{ color: row.ticketMedio ? '#fbbf24' : '#71717a' }}>
+                  <span className="text-[12px] truncate" style={{ color: '#2c2418' }}>{row.servicio}</span>
+                  <span className="text-[12px] text-right" style={{ color: '#8a785d' }}>{row.leads}</span>
+                  <span className="text-[12px] text-right" style={{ color: '#b8862f' }}>{row.citas}</span>
+                  <span className="text-[12px] text-right" style={{ color: '#4f8b5f' }}>{row.cerrados}</span>
+                  <span className="text-[12px] text-right" style={{ color: row.ticketMedio ? '#9b6a24' : '#9a8a72' }}>
                     {row.ticketMedio ? `€${row.ticketMedio.toLocaleString('es-ES')}` : '—'}
                   </span>
                 </div>

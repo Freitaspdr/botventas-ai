@@ -24,4 +24,5 @@ export const env = {
   GOOGLE_CALENDAR_ID:            process.env.GOOGLE_CALENDAR_ID ?? 'primary',
   GOOGLE_SERVICE_ACCOUNT_EMAIL:  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ?? '',
   GOOGLE_PRIVATE_KEY:            (process.env.GOOGLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
+  ENABLE_BACKGROUND_JOBS:        process.env.ENABLE_BACKGROUND_JOBS !== 'false',
 };

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createClient } from '@supabase/supabase-js';
+import { BOTVENTAS_API_URL, DEFAULT_EVOLUTION_API_URL } from '@/lib/server-config';
 
 function getSupabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 }
 
-const WEBHOOK_URL = (process.env.BOTVENTAS_API_URL || 'http://46.225.183.139:3000') + '/webhook';
+const WEBHOOK_URL = `${BOTVENTAS_API_URL}/webhook`;
 
 async function getEmpresaConfig(empresaId: string) {
   const { data, error } = await getSupabase()
@@ -45,7 +46,7 @@ export async function GET(req: Request) {
     const instance = empresa.evolution_instance;
     if (!instance) return NextResponse.json({ error: 'Sin instancia configurada' }, { status: 400 });
 
-    const base = empresa.evolution_api_url || 'http://46.225.183.139:8080';
+    const base = empresa.evolution_api_url || DEFAULT_EVOLUTION_API_URL;
     const headers = evoHeaders(empresa.evolution_api_key || '');
 
     let url: string;
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
     const instance = empresa.evolution_instance;
     if (!instance) return NextResponse.json({ error: 'Sin instancia configurada' }, { status: 400 });
 
-    const base = empresa.evolution_api_url || 'http://46.225.183.139:8080';
+    const base = empresa.evolution_api_url || DEFAULT_EVOLUTION_API_URL;
     const headers = evoHeaders(empresa.evolution_api_key || '');
 
     const res = await fetch(`${base}/instance/connect/${instance}`, { method: 'GET', headers });
@@ -96,7 +97,7 @@ export async function PUT(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const empresa = await getEmpresaConfig(empresaId);
-    const base = empresa.evolution_api_url || 'http://46.225.183.139:8080';
+    const base = empresa.evolution_api_url || DEFAULT_EVOLUTION_API_URL;
     const apiKey = empresa.evolution_api_key || '';
     const headers = evoHeaders(apiKey);
 
@@ -104,7 +105,7 @@ export async function PUT(req: Request) {
     const instanceName = empresa.evolution_instance || body.instanceName;
     if (!instanceName) return NextResponse.json({ error: 'instanceName requerido' }, { status: 400 });
 
-    const createBody = {
+    const createBody: Record<string, unknown> = {
       instanceName,
       qrcode: true,
       webhook: {
@@ -114,6 +115,13 @@ export async function PUT(req: Request) {
         events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
       },
     };
+
+    if (process.env.WEBHOOK_SECRET) {
+      createBody.webhook = {
+        ...(createBody.webhook as Record<string, unknown>),
+        headers: { 'x-webhook-secret': process.env.WEBHOOK_SECRET },
+      };
+    }
 
     const res = await fetch(`${base}/instance/create`, {
       method: 'POST',
@@ -154,7 +162,7 @@ export async function DELETE(req: Request) {
     const instance = empresa.evolution_instance;
     if (!instance) return NextResponse.json({ error: 'Sin instancia configurada' }, { status: 400 });
 
-    const base = empresa.evolution_api_url || 'http://46.225.183.139:8080';
+    const base = empresa.evolution_api_url || DEFAULT_EVOLUTION_API_URL;
     const headers = evoHeaders(empresa.evolution_api_key || '');
 
     const res = await fetch(`${base}/instance/logout/${instance}`, { method: 'DELETE', headers });

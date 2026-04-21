@@ -7,10 +7,11 @@ export function LogoutButton() {
   return (
     <button
       onClick={() => signOut({ callbackUrl: '/login' })}
-      className="relative flex items-center justify-center w-7 h-7 rounded-lg transition-colors hover:bg-white/[0.04]"
+      className="relative flex h-9 w-9 items-center justify-center rounded-[14px] transition-colors hover:bg-[#f3e5ce]"
       title="Cerrar sesión"
+      style={{ color: '#7a6548' }}
     >
-      <LogOut size={14} className="text-[#a1a1aa]" strokeWidth={1.5} />
+      <LogOut size={15} strokeWidth={1.7} />
     </button>
   );
 }

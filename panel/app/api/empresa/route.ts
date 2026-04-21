@@ -8,7 +8,7 @@ function getSupabase() {
 
 const EMPRESA_FIELDS = [
   'nombre', 'bot_nombre', 'bot_tono', 'bot_objetivo', 'bot_productos', 'bot_horarios',
-  'bot_ciudad', 'bot_extra', 'encargado_tel',
+  'bot_ciudad', 'bot_extra', 'encargado_tel', 'crm_api_token',
   'evolution_instance', 'evolution_api_url', 'evolution_api_key',
   'plan', 'conv_limite', 'conv_usadas',
   'notif_hot_leads', 'notif_transfers', 'notif_nuevos', 'notif_resumen',
@@ -17,7 +17,7 @@ const EMPRESA_FIELDS = [
 const ALLOWED_PATCH = [
   'bot_nombre', 'bot_tono', 'bot_objetivo', 'bot_productos',
   'bot_horarios', 'bot_ciudad', 'bot_extra',
-  'encargado_tel', 'evolution_instance', 'evolution_api_url', 'evolution_api_key',
+  'encargado_tel', 'evolution_instance', 'evolution_api_url',
   'notif_hot_leads', 'notif_transfers', 'notif_nuevos', 'notif_resumen',
 ];
 
@@ -32,7 +32,13 @@ export async function GET() {
     .single();
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data);
+
+  const { evolution_api_key: _secret, ...safeData } =
+    data as unknown as { evolution_api_key?: string } & Record<string, unknown>;
+  return NextResponse.json({
+    ...safeData,
+    has_evolution_api_key: !!_secret,
+  });
 }
 
 export async function PATCH(req: Request) {

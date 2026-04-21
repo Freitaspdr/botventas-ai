@@ -60,7 +60,7 @@ export function AdminForms({ empresas }: Props) {
       body: JSON.stringify({
         nombre: eName, whatsapp_num: ePhone || `PENDING-${Date.now()}`,
         plan: ePlan, evolution_instance: eEvolution || null,
-        evolution_api_url: 'http://46.225.183.139:8080',
+        evolution_api_url: null,
         evolution_api_key: eApiKey || null,
       }),
     });
@@ -146,6 +146,7 @@ export function AdminForms({ empresas }: Props) {
         <div className="flex flex-col gap-1">
           <label className="text-[11px]" style={{ color: '#71717a' }}>Rol</label>
           <select value={uRol} onChange={e => setURol(e.target.value)} style={selectStyle}>
+            <option value="superadmin">Superadmin</option>
             <option value="admin">Admin</option>
             <option value="agente">Agente</option>
           </select>

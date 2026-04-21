@@ -29,15 +29,21 @@ export default async function LeadsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div
+        className="flex items-center justify-between rounded-[28px] p-6"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,253,248,0.98), rgba(246,232,207,0.92) 56%, rgba(220,190,130,0.36))',
+          border: '1px solid rgba(218,197,160,0.72)',
+          boxShadow: '0 20px 52px rgba(116,82,28,0.1)',
+        }}
+      >
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-medium tracking-tight" style={{ color: '#fafafa' }}>
+          <h1 className="text-3xl font-semibold tracking-[-0.05em]" style={{ color: '#2c2418' }}>
             Leads
           </h1>
           <span
-            className="text-[9px] font-medium px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(255,255,255,0.06)', color: '#a1a1aa' }}
+            className="rounded-full px-3 py-1 text-[10px] font-medium"
+            style={{ background: '#f3e3bf', color: '#704a14' }}
           >
             {total}
           </span>
@@ -46,11 +52,11 @@ export default async function LeadsPage() {
         <a
           href="/api/leads/export"
           download
-          className="flex items-center gap-1.5 text-[12px] px-3 py-2 rounded-[10px] transition-colors hover:bg-white/[0.04]"
+          className="flex items-center gap-1.5 text-[12px] px-4 py-2.5 rounded-[16px] transition-colors hover:opacity-90"
           style={{
-            background: 'rgba(255,255,255,0.025)',
-            border: '0.5px solid rgba(255,255,255,0.05)',
-            color: '#a1a1aa',
+            background: 'linear-gradient(135deg, #d7ac55, #9b6a24)',
+            border: '1px solid rgba(151,102,31,0.22)',
+            color: '#fffaf0',
           }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

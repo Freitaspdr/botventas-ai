@@ -16,7 +16,12 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const { data: empresa, error } = await getSupabase()
     .from('empresas')
-    .select('*')
+    .select(`
+      id, nombre, whatsapp_num, plan, conv_limite, conv_usadas,
+      bot_nombre, bot_tono, bot_objetivo, bot_productos, bot_horarios, bot_ciudad, bot_extra,
+      encargado_tel, evolution_instance, evolution_api_url, evolution_api_key,
+      notif_hot_leads, notif_transfers, notif_nuevos, notif_resumen
+    `)
     .eq('id', id)
     .single();
 
@@ -28,6 +33,12 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
       </div>
     );
   }
+
+  const safeEmpresa = {
+    ...empresa,
+    has_evolution_api_key: !!empresa.evolution_api_key,
+    evolution_api_key: '',
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -51,7 +62,7 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
 
       <EvolutionConnector instance={empresa.evolution_instance} empresaId={id} />
       <div className="mt-3" />
-      <BotConfigForm empresa={empresa} isSuperAdmin={true} empresaId={id} />
+      <BotConfigForm empresa={safeEmpresa} isSuperAdmin={true} empresaId={id} />
     </div>
   );
 }

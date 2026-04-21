@@ -19,7 +19,7 @@ interface Conv {
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);
-  if (m < 1)  return 'ahora';
+  if (m < 1) return 'ahora';
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
@@ -28,137 +28,148 @@ function timeAgo(iso: string) {
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 }
 
 function avatarStyle(nivel?: string | null, estado?: string) {
-  if (estado === 'transferida') return { bg: 'linear-gradient(135deg,#450a0a,#7f1d1d)', color: '#fca5a5' };
-  if (nivel === 'alto')         return { bg: 'linear-gradient(135deg,#064e3b,#065f46)', color: '#6ee7b7' };
-  if (nivel === 'medio')        return { bg: 'linear-gradient(135deg,#1e1b4b,#312e81)', color: '#a5b4fc' };
-  return { bg: 'rgba(255,255,255,0.04)', color: '#a1a1aa' };
+  if (estado === 'transferida') return { bg: 'linear-gradient(135deg,#f8ded9,#f2b8ae)', color: '#8f2f2a' };
+  if (nivel === 'alto') return { bg: 'linear-gradient(135deg,#e1f0df,#b9d9b5)', color: '#315f3d' };
+  if (nivel === 'medio') return { bg: 'linear-gradient(135deg,#f3e3bf,#dfbd73)', color: '#704a14' };
+  return { bg: 'linear-gradient(135deg,#f8efe0,#ead5ad)', color: '#6f5632' };
 }
 
 const estadoBadge: Record<string, { bg: string; color: string; label: string }> = {
-  activa:      { bg: 'rgba(34,197,94,0.1)',   color: '#4ade80', label: 'Activa' },
-  cerrada:     { bg: 'rgba(255,255,255,0.04)', color: '#a1a1aa', label: 'Cerrada' },
-  transferida: { bg: 'rgba(239,68,68,0.1)',   color: '#f87171', label: 'Transferida' },
+  activa: { bg: '#dfeedd', color: '#3f744d', label: 'Activa' },
+  cerrada: { bg: '#f4ead9', color: '#8a785d', label: 'Cerrada' },
+  transferida: { bg: '#f8ded9', color: '#a33b36', label: 'Transferida' },
 };
 
 export function ConversationTable({ conversations }: { conversations: Conv[] }) {
   if (conversations.length === 0) {
     return (
-      <p className="text-center py-12 text-[13px]" style={{ color: '#71717a' }}>
+      <div
+        className="rounded-[26px] py-16 text-center text-[13px]"
+        style={{
+          color: '#8a785d',
+          background: 'linear-gradient(180deg, rgba(255,253,248,0.96), rgba(249,239,224,0.9))',
+          border: '1px solid rgba(218,197,160,0.72)',
+        }}
+      >
         Sin conversaciones registradas.
-      </p>
+      </div>
     );
   }
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ border: '0.5px solid rgba(255,255,255,0.05)' }}
+      className="overflow-hidden rounded-[26px]"
+      style={{
+        border: '1px solid rgba(218,197,160,0.72)',
+        background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))',
+        boxShadow: '0 14px 34px rgba(116,82,28,0.08)',
+      }}
     >
-      {/* Header row */}
       <div
-        className="grid text-[10px] uppercase tracking-wider px-4 py-2.5"
+        className="grid px-5 py-4 text-[10px] uppercase tracking-[0.2em]"
         style={{
-          gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 80px',
-          color: '#71717a',
-          borderBottom: '0.5px solid rgba(255,255,255,0.05)',
-          background: 'rgba(255,255,255,0.015)',
+          gridTemplateColumns: '2.2fr 2fr 1fr 1fr 1fr 100px',
+          color: '#9a8153',
+          borderBottom: '1px solid rgba(218,197,160,0.62)',
+          background: 'rgba(248,239,224,0.58)',
         }}
       >
         <span>Cliente</span>
         <span>Último mensaje</span>
         <span>Estado</span>
-        <span>Lead score</span>
-        <span>Nurturing</span>
+        <span>Score</span>
+        <span>Seguimiento</span>
         <span className="text-right">Actividad</span>
       </div>
 
-      {/* Rows */}
       {conversations.map((conv) => {
         const av = avatarStyle(conv.lead_nivel, conv.estado);
         const badge = estadoBadge[conv.estado] ?? estadoBadge.cerrada;
         const score = conv.lead_score ?? 0;
+        const scoreColor = score > 70 ? '#4f8b5f' : score > 40 ? '#b8862f' : '#b8a789';
 
         return (
           <Link
             key={conv.id}
             href={`/conversaciones/${conv.id}`}
-            className="grid items-center px-4 py-3 transition-colors hover:bg-white/[0.02]"
+            className="grid items-center px-5 py-4 transition-colors hover:bg-[#fbf5ea]"
             style={{
-              gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 80px',
-              borderBottom: '0.5px solid rgba(255,255,255,0.04)',
+              gridTemplateColumns: '2.2fr 2fr 1fr 1fr 1fr 100px',
+              borderBottom: '1px solid rgba(234,220,198,0.72)',
             }}
           >
-            {/* Avatar + nombre */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex-shrink-0">
                 <div
-                  className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[10px] font-medium select-none"
+                  className="flex h-11 w-11 items-center justify-center rounded-[16px] text-[11px] font-semibold"
                   style={{ background: av.bg, color: av.color }}
                 >
                   {getInitials(conv.cliente_nombre)}
                 </div>
                 {conv.estado === 'activa' && (
                   <span
-                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full"
-                    style={{ background: '#22c55e', border: '2px solid #09090b' }}
+                    className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full"
+                    style={{ background: '#4f8b5f', border: '2px solid #fffdfa' }}
                   />
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-[13px] font-medium truncate" style={{ color: '#e4e4e7' }}>
+                <p className="truncate text-[13px] font-medium" style={{ color: '#2c2418' }}>
                   {conv.cliente_nombre || 'Sin nombre'}
                 </p>
-                <p className="text-[11px] truncate" style={{ color: '#a1a1aa' }}>
+                <p className="truncate text-[11px]" style={{ color: '#8a785d' }}>
                   {conv.cliente_tel}
                 </p>
               </div>
             </div>
 
-            {/* Último mensaje */}
-            <p className="text-[12px] truncate pr-4" style={{ color: '#a1a1aa' }}>
-              {conv.ultimo_mensaje ?? '—'}
-            </p>
+            <div className="min-w-0 pr-5">
+              <p className="truncate text-[12px]" style={{ color: '#5f513e' }}>
+                {conv.ultimo_mensaje ?? '—'}
+              </p>
+              <p className="mt-1 text-[10px]" style={{ color: '#9a8a72' }}>
+                {conv.total_mensajes} mensajes
+              </p>
+            </div>
 
-            {/* Estado badge */}
             <div>
               <span
-                className="text-[9px] font-medium px-1.5 py-0.5 rounded"
+                className="rounded-full px-3 py-1 text-[10px] font-medium"
                 style={{ background: badge.bg, color: badge.color }}
               >
                 {badge.label}
               </span>
             </div>
 
-            {/* Lead score */}
-            <div className="flex items-center gap-2 pr-4">
-              <div
-                className="flex-1 h-[4px] rounded-full overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${score}%`,
-                    background: score > 70 ? '#22c55e' : score > 40 ? '#f59e0b' : '#a1a1aa',
-                  }}
-                />
+            <div className="pr-5">
+              <div className="mb-1 flex items-center justify-between text-[11px]">
+                <span style={{ color: '#5f513e' }}>{score}</span>
+                {conv.lead_nivel && (
+                  <span style={{ color: '#9a8a72' }}>{conv.lead_nivel}</span>
+                )}
               </div>
-              <span className="text-[11px] flex-shrink-0" style={{ color: '#a1a1aa' }}>
-                {score}
+              <div className="h-[6px] overflow-hidden rounded-full" style={{ background: '#eadcc6' }}>
+                <div className="h-full rounded-full" style={{ width: `${score}%`, background: scoreColor }} />
+              </div>
+            </div>
+
+            <div>
+              <span
+                className="rounded-full px-3 py-1 text-[10px] font-medium"
+                style={{
+                  background: conv.nurturing_step > 0 ? '#f3e3bf' : '#f4ead9',
+                  color: conv.nurturing_step > 0 ? '#704a14' : '#8a785d',
+                }}
+              >
+                {conv.nurturing_step > 0 ? `Paso ${conv.nurturing_step}/4` : 'En curso'}
               </span>
             </div>
 
-            {/* Nurturing */}
-            <span className="text-[12px]" style={{ color: conv.nurturing_step > 0 ? '#fbbf24' : '#71717a' }}>
-              {conv.nurturing_step > 0 ? `${conv.nurturing_step}/4` : '—'}
-            </span>
-
-            {/* Hora */}
-            <span className="text-[11px] text-right" style={{ color: '#a1a1aa' }}>
+            <span className="text-right text-[11px]" style={{ color: '#8a785d' }}>
               {timeAgo(conv.actualizada_en)}
             </span>
           </Link>

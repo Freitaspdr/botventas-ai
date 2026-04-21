@@ -3,13 +3,27 @@
 import { useState } from 'react';
 import { PromptGenerator } from './prompt-generator';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { empresa: any; isSuperAdmin?: boolean; empresaId?: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [form, setForm] = useState<any>(empresa);
+type EmpresaFormData = Record<string, any> & {
+  plan?: string;
+  conv_limite?: number;
+  conv_usadas?: number;
+  has_evolution_api_key?: boolean;
+};
+
+export function BotConfigForm({
+  empresa,
+  isSuperAdmin = false,
+  empresaId,
+}: {
+  empresa: EmpresaFormData;
+  isSuperAdmin?: boolean;
+  empresaId?: string;
+}) {
+  const [form, setForm] = useState<EmpresaFormData>(empresa);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [newEvolutionApiKey, setNewEvolutionApiKey] = useState('');
 
   function set(key: string, value: unknown) {
     setForm((prev: Record<string, unknown>) => ({ ...prev, [key]: value }));
@@ -36,31 +50,39 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
       payload.bot_extra          = form.bot_extra;
       payload.evolution_instance = form.evolution_instance;
       payload.evolution_api_url  = form.evolution_api_url  || null;
-      payload.evolution_api_key  = form.evolution_api_key  || null;
       payload.plan               = form.plan;
+      if (newEvolutionApiKey.trim()) {
+        payload.evolution_api_key = newEvolutionApiKey.trim();
+      }
     }
     const url = isSuperAdmin && empresaId
       ? `/api/admin/empresa/${empresaId}`
       : '/api/empresa';
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.ok && newEvolutionApiKey.trim()) {
+      setForm((prev) => ({ ...prev, has_evolution_api_key: true }));
+      setNewEvolutionApiKey('');
+    }
     setSaving(false);
-    setSaved(true);
+    setSaved(res.ok);
   }
 
-  const planPct = form.conv_limite > 0 ? Math.round((form.conv_usadas / form.conv_limite) * 100) : 0;
-  const planColor = planPct > 90 ? '#ef4444' : planPct > 70 ? '#f59e0b' : '#22c55e';
+  const convLimite = Number(form.conv_limite ?? 0);
+  const convUsadas = Number(form.conv_usadas ?? 0);
+  const planPct = convLimite > 0 ? Math.round((convUsadas / convLimite) * 100) : 0;
+  const planColor = planPct > 90 ? '#c2413c' : planPct > 70 ? '#b8862f' : '#4f8b5f';
 
   const inputStyle: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.04)',
-    border: '0.5px solid rgba(255,255,255,0.08)',
-    borderRadius: 8,
-    padding: '8px 12px',
+    background: 'rgba(255,253,248,0.9)',
+    border: '1px solid rgba(218,197,160,0.68)',
+    borderRadius: 14,
+    padding: '10px 14px',
     fontSize: 13,
-    color: '#fafafa',
+    color: '#2c2418',
     outline: 'none',
     width: '100%',
   };
@@ -70,44 +92,44 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
   const labelStyle: React.CSSProperties = {
     display: 'block',
     fontSize: 11,
-    color: '#a1a1aa',
+    color: '#8a785d',
     marginBottom: 4,
   };
 
   const sectionTitle = (title: string) => (
-    <p className="text-[12px] uppercase tracking-wider pb-2 mb-1" style={{ color: '#71717a', borderBottom: '0.5px solid rgba(255,255,255,0.05)' }}>
+    <p className="text-[12px] uppercase tracking-wider pb-2 mb-1" style={{ color: '#9a8153', borderBottom: '1px solid rgba(218,197,160,0.62)' }}>
       {title}
     </p>
   );
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-2xl">
+    <form onSubmit={handleSubmit} className="luxury-card flex max-w-2xl flex-col gap-6 rounded-[28px] p-5">
 
       {/* ── Generador de prompts (solo superadmin) ── */}
       {isSuperAdmin && (
         <div
           className="rounded-xl overflow-hidden"
-          style={{ border: '0.5px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.03)' }}
+          style={{ border: '1px solid rgba(79,139,95,0.18)', background: '#f5fbf2' }}
         >
           <button
             type="button"
             onClick={() => setShowGenerator(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-[#edf5e9]"
           >
             <div className="flex items-center gap-2.5">
               <span className="text-[14px]">✨</span>
               <div className="text-left">
-                <p className="text-[13px] font-medium" style={{ color: '#4ade80' }}>Asistente de configuración</p>
-                <p className="text-[11px]" style={{ color: '#71717a' }}>Genera los textos del bot respondiendo preguntas paso a paso</p>
+                <p className="text-[13px] font-medium" style={{ color: '#3f744d' }}>Asistente de configuración</p>
+                <p className="text-[11px]" style={{ color: '#8a785d' }}>Genera los textos del bot respondiendo preguntas paso a paso</p>
               </div>
             </div>
-            <span className="text-[11px]" style={{ color: '#71717a' }}>
+            <span className="text-[11px]" style={{ color: '#8a785d' }}>
               {showGenerator ? '▲ Cerrar' : '▼ Abrir'}
             </span>
           </button>
 
           {showGenerator && (
-            <div className="px-4 pb-4 pt-1" style={{ borderTop: '0.5px solid rgba(34,197,94,0.1)' }}>
+            <div className="px-4 pb-4 pt-1" style={{ borderTop: '1px solid rgba(79,139,95,0.16)' }}>
               <PromptGenerator
                 onApply={(values) => {
                   set('bot_objetivo',  values.bot_objetivo);
@@ -188,7 +210,7 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
           onChange={e => set('encargado_tel', e.target.value)}
           placeholder="34612345678 (sin + ni espacios)"
         />
-        <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
+        <p className="mt-1 text-[11px]" style={{ color: '#8a785d' }}>
           Si es distinto al número del bot. Aquí llegan los avisos.
         </p>
       </div>
@@ -200,10 +222,10 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
           { key: 'notif_resumen',   label: 'Resumen diario a las 20:00',   desc: 'Resumen del día con métricas de actividad' },
         ].map(({ key, label, desc }) => (
           <div key={key} className="flex items-center justify-between py-2.5 px-3 rounded-[10px]"
-            style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.05)' }}>
+            style={{ background: '#fffdfa', border: '1px solid rgba(218,197,160,0.62)' }}>
             <div>
-              <p className="text-[13px]" style={{ color: '#e4e4e7' }}>{label}</p>
-              <p className="text-[11px] mt-0.5" style={{ color: '#a1a1aa' }}>{desc}</p>
+              <p className="text-[13px]" style={{ color: '#2c2418' }}>{label}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: '#8a785d' }}>{desc}</p>
             </div>
             <button
               type="button"
@@ -211,13 +233,13 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
               aria-checked={!!form[key]}
               onClick={() => set(key, !form[key])}
               className="relative flex-shrink-0 w-9 h-5 rounded-full transition-colors"
-              style={{ background: form[key] ? '#22c55e' : 'rgba(255,255,255,0.08)' }}
+              style={{ background: form[key] ? '#4f8b5f' : '#eadcc6' }}
             >
               <span
                 className="absolute top-0.5 w-4 h-4 rounded-full transition-all"
                 style={{
                   left: form[key] ? 'calc(100% - 18px)' : '2px',
-                  background: form[key] ? '#fff' : 'rgba(255,255,255,0.3)',
+                  background: form[key] ? '#fff' : '#fffaf0',
                 }}
               />
             </button>
@@ -229,7 +251,7 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
       {sectionTitle('Plan')}
       <div
         className="rounded-xl p-4 flex flex-col gap-3"
-        style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.05)' }}
+        style={{ background: '#fffdfa', border: '1px solid rgba(218,197,160,0.62)' }}
       >
         <div className="flex items-center justify-between">
           {isSuperAdmin ? (
@@ -243,19 +265,19 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
               <option value="enterprise">Enterprise — Ilimitado</option>
             </select>
           ) : (
-            <span className="text-[13px]" style={{ color: '#a1a1aa' }}>
-              Plan <span className="font-medium capitalize" style={{ color: '#fafafa' }}>{form.plan}</span>
+            <span className="text-[13px]" style={{ color: '#8a785d' }}>
+              Plan <span className="font-medium capitalize" style={{ color: '#2c2418' }}>{form.plan}</span>
             </span>
           )}
-          <span className="text-[12px]" style={{ color: '#a1a1aa' }}>
+          <span className="text-[12px]" style={{ color: '#8a785d' }}>
             {form.conv_usadas?.toLocaleString('es-ES')} / {form.conv_limite?.toLocaleString('es-ES')} conversaciones
           </span>
         </div>
-        <div className="h-[5px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-[5px] rounded-full overflow-hidden" style={{ background: '#eadcc6' }}>
           <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(planPct, 100)}%`, background: planColor }} />
         </div>
         {!isSuperAdmin && (
-          <p className="text-[11px]" style={{ color: '#52525b' }}>Contacta con tu administrador para cambiar de plan.</p>
+          <p className="text-[11px]" style={{ color: '#8a785d' }}>Contacta con tu administrador para cambiar de plan.</p>
         )}
       </div>
 
@@ -272,7 +294,7 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
                 onChange={e => set('evolution_api_url', e.target.value)}
                 placeholder="http://localhost:8080  (vacío = usar servidor global)"
               />
-              <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
+              <p className="mt-1 text-[11px]" style={{ color: '#8a785d' }}>
                 Deja vacío para usar el servidor Evolution API compartido del sistema.
               </p>
             </div>
@@ -281,11 +303,16 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
               <input
                 type="password"
                 style={{ ...inputStyle, fontFamily: 'monospace' }}
-                value={form.evolution_api_key || ''}
-                onChange={e => set('evolution_api_key', e.target.value)}
-                placeholder="(vacío = usar clave global)"
+                value={newEvolutionApiKey}
+                onChange={e => setNewEvolutionApiKey(e.target.value)}
+                placeholder={form.has_evolution_api_key ? 'Nueva clave para reemplazar la actual' : '(vacío = usar clave global)'}
                 autoComplete="new-password"
               />
+              <p className="mt-1 text-[11px]" style={{ color: '#8a785d' }}>
+                {form.has_evolution_api_key
+                  ? 'Hay una clave guardada. Déjalo vacío si no quieres cambiarla.'
+                  : 'La clave se guarda como secreto y no se vuelve a mostrar en pantalla.'}
+              </p>
             </div>
             <div>
               <label style={labelStyle}>Nombre de instancia</label>
@@ -295,7 +322,7 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
                 onChange={e => set('evolution_instance', e.target.value)}
                 placeholder="beleti-bot"
               />
-              <p className="mt-1 text-[11px]" style={{ color: '#71717a' }}>
+              <p className="mt-1 text-[11px]" style={{ color: '#8a785d' }}>
                 Nombre exacto de la instancia en Evolution API.
               </p>
             </div>
@@ -308,7 +335,7 @@ export function BotConfigForm({ empresa, isSuperAdmin = false, empresaId }: { em
         type="submit"
         disabled={saving}
         className="flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-[13px] font-medium transition-all hover:opacity-90 disabled:opacity-50"
-        style={{ background: saved ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.12)', color: '#4ade80' }}
+        style={{ background: saved ? '#dfeedd' : 'linear-gradient(135deg, #d7ac55, #9b6a24)', color: saved ? '#3f744d' : '#fffaf0' }}
       >
         {saving ? (
           <>

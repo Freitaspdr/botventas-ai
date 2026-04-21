@@ -1,14 +1,48 @@
 import express from 'express';
 import cors from 'cors';
 import { env } from './config/env';
-import { testConnection } from './db/client';
+import { testConnection, withAdvisoryLock } from './db/client';
 import { webhookRouter } from './routes/webhook';
+import { crmRouter } from './routes/crm';
 import { runNurturingCycle } from './services/nurturing.service';
 import { sendDeferredMessages } from './services/scheduler.service';
 import { sendDailySummary, getAllEmpresasActivasIds } from './services/notification.service';
 
+function createNonOverlappingRunner(name: string, task: () => Promise<void>) {
+  let running = false;
+
+  return async () => {
+    if (running) {
+      console.log(`⏭️ Job omitido por solape: ${name}`);
+      return;
+    }
+
+    running = true;
+    try {
+      const lock = await withAdvisoryLock(`jobs:${name}`, async () => {
+        await task();
+      });
+
+      if (!lock.acquired) {
+        console.log(`🔒 Job activo en otra instancia: ${name}`);
+      }
+    } finally {
+      running = false;
+    }
+  };
+}
+
+async function sendDailySummaries(): Promise<void> {
+  const empresaIds = await getAllEmpresasActivasIds();
+  for (const id of empresaIds) {
+    await sendDailySummary(id).catch(err =>
+      console.error(`❌ Error enviando resumen diario a empresa ${id}:`, err),
+    );
+  }
+  console.log(`📊 Resumen diario enviado a ${empresaIds.length} empresa(s)`);
+}
+
 async function main() {
-  // Verifica conexión a la base de datos antes de arrancar
   await testConnection();
 
   const app = express();
@@ -16,16 +50,24 @@ async function main() {
   app.use(cors({
     origin: ['http://localhost:8080', 'http://localhost:3001'],
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'apikey'],
+    allowedHeaders: ['Content-Type', 'apikey', 'x-webhook-secret', 'x-botventas-secret', 'x-crm-token', 'x-empresa-id'],
   }));
 
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // Rutas
-  app.use('/', webhookRouter);
+  app.get('/', (_req, res) => {
+    res.json({
+      ok: true,
+      service: 'botventas-ai',
+      health: '/crm/health',
+      webhook: '/webhook',
+    });
+  });
 
-  // 404
+  app.use('/', webhookRouter);
+  app.use('/crm', crmRouter);
+
   app.use((_req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
   });
@@ -36,28 +78,32 @@ async function main() {
     console.log(`   Instancia WhatsApp: ${env.EVOLUTION_INSTANCE}`);
   });
 
-  // ─── Tareas programadas ──────────────────────────────────────────────────
+  if (!env.ENABLE_BACKGROUND_JOBS) {
+    console.log('⏸️ Background jobs desactivados por ENABLE_BACKGROUND_JOBS=false');
+    return;
+  }
 
-  // Nurturing: cada 15 minutos
+  const runNurturingJob = createNonOverlappingRunner('nurturing', runNurturingCycle);
+  const runDeferredJob = createNonOverlappingRunner('deferred-messages', sendDeferredMessages);
+  const runDailySummaryJob = createNonOverlappingRunner('daily-summary', sendDailySummaries);
+
   setInterval(async () => {
     try {
-      await runNurturingCycle();
+      await runNurturingJob();
     } catch (err) {
       console.error('❌ Error en ciclo de nurturing:', err);
     }
   }, 15 * 60 * 1000);
 
-  // Mensajes diferidos: cada 5 minutos
   setInterval(async () => {
     try {
-      await sendDeferredMessages();
+      await runDeferredJob();
     } catch (err) {
       console.error('❌ Error enviando mensajes diferidos:', err);
     }
   }, 5 * 60 * 1000);
 
-  // Resumen diario: a las 20:00 cada día
-  scheduleDailySummary();
+  scheduleDailySummary(runDailySummaryJob);
   console.log('⏰ Tareas programadas activas: nurturing (15min) + diferidos (5min) + resumen diario (20:00)');
 }
 
@@ -69,23 +115,17 @@ function msHastaLas20(): number {
   return target.getTime() - now.getTime();
 }
 
-function scheduleDailySummary(): void {
+function scheduleDailySummary(runDailySummaryJob: () => Promise<void>): void {
   const delay = msHastaLas20();
   console.log(`📊 Resumen diario programado en ${Math.round(delay / 3600000 * 10) / 10}h`);
 
   setTimeout(async () => {
     try {
-      const empresaIds = await getAllEmpresasActivasIds();
-      for (const id of empresaIds) {
-        await sendDailySummary(id).catch(err =>
-          console.error(`❌ Error enviando resumen diario a empresa ${id}:`, err),
-        );
-      }
-      console.log(`📊 Resumen diario enviado a ${empresaIds.length} empresa(s)`);
+      await runDailySummaryJob();
     } catch (err) {
       console.error('❌ Error en resumen diario:', err);
     }
-    scheduleDailySummary();
+    scheduleDailySummary(runDailySummaryJob);
   }, delay);
 }
 
