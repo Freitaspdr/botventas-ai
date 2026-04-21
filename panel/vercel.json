@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm ci",
-  "buildCommand": "NEXT_ENABLE_ADAPTER=0 npm run build",
+  "buildCommand": "env -u NEXT_ENABLE_ADAPTER npm run build",
   "outputDirectory": ".next"
 }
