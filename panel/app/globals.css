@@ -125,6 +125,24 @@
     background-color: #fffdfa;
     color: #2c2418;
   }
+
+  input,
+  textarea {
+    color: #2c2418;
+    caret-color: #9b6a24;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9a8a72;
+    opacity: 1;
+  }
+
+  input[type="time"],
+  input[type="date"],
+  input[type="datetime-local"] {
+    color-scheme: light;
+  }
 }
 
 @layer utilities {

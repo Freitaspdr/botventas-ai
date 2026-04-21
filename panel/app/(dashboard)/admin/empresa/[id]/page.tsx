@@ -1,13 +1,9 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/db';
 import { BotConfigForm } from '@/components/bot-config-form';
 import { EvolutionConnector } from '@/components/evolution-connector';
 import Link from 'next/link';
-
-function getSupabase() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
-}
 
 export default async function AdminEmpresaPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -28,8 +24,8 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
   if (error || !empresa) {
     return (
       <div className="flex flex-col gap-4">
-        <Link href="/admin" className="text-[12px]" style={{ color: '#71717a' }}>← Volver al admin</Link>
-        <p className="text-[13px]" style={{ color: '#f87171' }}>Empresa no encontrada.</p>
+        <Link href="/admin" className="text-[12px]" style={{ color: '#8a785d' }}>Volver al admin</Link>
+        <p className="text-[13px]" style={{ color: '#c2413c' }}>Empresa no encontrada.</p>
       </div>
     );
   }
@@ -45,17 +41,17 @@ export default async function AdminEmpresaPage({ params }: { params: Promise<{ i
       <div className="flex items-center gap-3">
         <Link
           href="/admin"
-          className="text-[12px] px-3 py-1.5 rounded-lg transition-colors hover:bg-white/[0.04]"
-          style={{ color: '#71717a', border: '0.5px solid rgba(255,255,255,0.07)' }}
+          className="rounded-lg px-3 py-1.5 text-[12px] transition-colors hover:bg-[#f3e3bf]"
+          style={{ color: '#8a5d1a', border: '1px solid rgba(184,134,47,0.22)' }}
         >
-          ← Admin
+          Admin
         </Link>
         <div>
-          <h1 className="text-xl font-medium tracking-tight" style={{ color: '#fafafa' }}>
+          <h1 className="text-xl font-medium tracking-tight" style={{ color: '#2c2418' }}>
             {empresa.nombre}
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: '#71717a' }}>
-            Configuración completa · Plan <span className="capitalize">{empresa.plan}</span>
+          <p className="mt-0.5 text-xs" style={{ color: '#8a785d' }}>
+            Configuracion completa · Plan <span className="capitalize">{empresa.plan}</span>
           </p>
         </div>
       </div>

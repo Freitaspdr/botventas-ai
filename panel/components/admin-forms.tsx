@@ -13,15 +13,15 @@ function Field({ label, type = 'text', value, onChange, placeholder, required }:
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[11px]" style={{ color: '#71717a' }}>{label}{required && ' *'}</label>
+      <label className="text-[11px] font-medium" style={{ color: '#8a785d' }}>{label}{required && ' *'}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="rounded-lg px-3 py-1.5 text-[12px] outline-none"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', color: '#fafafa' }}
+        className="rounded-lg px-3 py-2 text-[12px] outline-none placeholder:text-[#9a8a72] focus-visible:ring-2 focus-visible:ring-[#b8862f]/25"
+        style={{ background: '#fffdfa', border: '1px solid rgba(218,197,160,0.72)', color: '#2c2418' }}
       />
     </div>
   );
@@ -47,8 +47,13 @@ export function AdminForms({ empresas }: Props) {
   const [uMsg, setUMsg] = useState('');
 
   const selectStyle = {
-    background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)',
-    color: '#fafafa', borderRadius: 8, padding: '6px 12px', fontSize: 12, width: '100%',
+    background: '#fffdfa',
+    border: '1px solid rgba(218,197,160,0.72)',
+    color: '#2c2418',
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontSize: 12,
+    width: '100%',
   };
 
   async function createEmpresa(e: React.FormEvent) {
@@ -93,27 +98,30 @@ export function AdminForms({ empresas }: Props) {
   }
 
   const formStyle = {
-    background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.07)',
-    borderRadius: 12, padding: 16,
+    background: 'linear-gradient(180deg, rgba(255,253,248,0.98), rgba(249,239,224,0.92))',
+    border: '1px solid rgba(218,197,160,0.72)',
+    borderRadius: 18,
+    padding: 16,
+    boxShadow: '0 14px 34px rgba(116,82,28,0.08), inset 0 1px 0 rgba(255,255,255,0.78)',
   };
 
   const btnStyle = {
-    background: 'rgba(59,130,246,0.15)', color: '#60a5fa',
-    border: '0.5px solid rgba(59,130,246,0.2)', borderRadius: 8,
+    background: 'linear-gradient(135deg, #d7ac55, #9b6a24)', color: '#fffaf0',
+    border: '1px solid rgba(151,102,31,0.22)', borderRadius: 10,
     padding: '7px 16px', fontSize: 12, fontWeight: 500, cursor: 'pointer',
     opacity: 1,
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid gap-4 lg:grid-cols-2">
 
       {/* Create empresa */}
       <form onSubmit={createEmpresa} style={formStyle} className="flex flex-col gap-3">
-        <p className="text-[13px] font-medium" style={{ color: '#fafafa' }}>Nueva empresa</p>
+        <p className="text-[13px] font-medium" style={{ color: '#2c2418' }}>Nueva Empresa</p>
         <Field label="Nombre" value={eName} onChange={setEName} placeholder="Beleti Car Audio" required />
         <Field label="WhatsApp número" value={ePhone} onChange={setEPhone} placeholder="34600000000" />
         <div className="flex flex-col gap-1">
-          <label className="text-[11px]" style={{ color: '#71717a' }}>Plan</label>
+          <label className="text-[11px] font-medium" style={{ color: '#8a785d' }}>Plan</label>
           <select value={ePlan} onChange={e => setEPlan(e.target.value)} style={selectStyle}>
             <option value="starter">Starter (500 conv)</option>
             <option value="pro">Pro (2000 conv)</option>
@@ -123,16 +131,16 @@ export function AdminForms({ empresas }: Props) {
         <Field label="Instancia Evolution (opcional)" value={eEvolution} onChange={setEEvolution} placeholder="mi-negocio" />
         <Field label="Evolution API Key (opcional)" value={eApiKey} onChange={setEApiKey} placeholder="mi-api-key" />
         <button type="submit" disabled={eLoading} style={{ ...btnStyle, opacity: eLoading ? 0.5 : 1 }}>
-          {eLoading ? 'Creando...' : 'Crear empresa'}
+          {eLoading ? 'Creando...' : 'Crear Empresa'}
         </button>
-        {eMsg && <p className="text-[11px]" style={{ color: eMsg.startsWith('✓') ? '#4ade80' : '#f87171' }}>{eMsg}</p>}
+        {eMsg && <p className="text-[11px]" style={{ color: eMsg.startsWith('Error:') ? '#c2413c' : '#3f744d' }}>{eMsg}</p>}
       </form>
 
       {/* Create user */}
       <form onSubmit={createUsuario} style={formStyle} className="flex flex-col gap-3">
-        <p className="text-[13px] font-medium" style={{ color: '#fafafa' }}>Nuevo usuario</p>
+        <p className="text-[13px] font-medium" style={{ color: '#2c2418' }}>Nuevo Usuario</p>
         <div className="flex flex-col gap-1">
-          <label className="text-[11px]" style={{ color: '#71717a' }}>Empresa</label>
+          <label className="text-[11px] font-medium" style={{ color: '#8a785d' }}>Empresa</label>
           <select value={uEmpresa} onChange={e => setUEmpresa(e.target.value)} style={selectStyle}>
             <option value="">— Sin empresa —</option>
             {empresas.map(emp => (
@@ -144,7 +152,7 @@ export function AdminForms({ empresas }: Props) {
         <Field label="Nombre *" value={uNombre} onChange={setUNombre} placeholder="Carlos García" required />
         <Field label="Contraseña * (mín. 8 caracteres)" type="password" value={uPass} onChange={setUPass} required />
         <div className="flex flex-col gap-1">
-          <label className="text-[11px]" style={{ color: '#71717a' }}>Rol</label>
+          <label className="text-[11px] font-medium" style={{ color: '#8a785d' }}>Rol</label>
           <select value={uRol} onChange={e => setURol(e.target.value)} style={selectStyle}>
             <option value="superadmin">Superadmin</option>
             <option value="admin">Admin</option>
@@ -152,9 +160,9 @@ export function AdminForms({ empresas }: Props) {
           </select>
         </div>
         <button type="submit" disabled={uLoading} style={{ ...btnStyle, opacity: uLoading ? 0.5 : 1 }}>
-          {uLoading ? 'Creando...' : 'Crear usuario'}
+          {uLoading ? 'Creando...' : 'Crear Usuario'}
         </button>
-        {uMsg && <p className="text-[11px]" style={{ color: uMsg.startsWith('✓') ? '#4ade80' : '#f87171' }}>{uMsg}</p>}
+        {uMsg && <p className="text-[11px]" style={{ color: uMsg.startsWith('Error:') ? '#c2413c' : '#3f744d' }}>{uMsg}</p>}
       </form>
 
     </div>

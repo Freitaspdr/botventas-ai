@@ -1,12 +1,8 @@
 import { auth } from '@/lib/auth';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/db';
 import { AdminForms } from '@/components/admin-forms';
 import { AdminGuide } from '@/components/admin-guide';
 import Link from 'next/link';
-
-function getSupabase() {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
-}
 
 async function getAdminData() {
   const [empresasRes, usuariosRes] = await Promise.all([
@@ -19,14 +15,28 @@ async function getAdminData() {
   };
 }
 
+const tableFrame: React.CSSProperties = {
+  border: '1px solid rgba(218,197,160,0.72)',
+  background: '#fffdfa',
+};
+
+const headRow: React.CSSProperties = {
+  borderBottom: '1px solid rgba(218,197,160,0.62)',
+  background: '#f8efe0',
+};
+
+const rowBorder: React.CSSProperties = {
+  borderBottom: '1px solid rgba(218,197,160,0.44)',
+};
+
 export default async function AdminPage() {
   const session = await auth();
   const rol = (session?.user as { rol?: string })?.rol;
 
   if (rol !== 'superadmin') {
     return (
-      <div className="flex items-center justify-center h-40">
-        <p className="text-[13px]" style={{ color: '#71717a' }}>Acceso restringido a super-administradores.</p>
+      <div className="flex h-40 items-center justify-center">
+        <p className="text-[13px]" style={{ color: '#8a785d' }}>Acceso restringido a super-administradores.</p>
       </div>
     );
   }
@@ -35,33 +45,32 @@ export default async function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-medium tracking-tight" style={{ color: '#fafafa' }}>Super Admin</h1>
+      <h1 className="text-xl font-medium tracking-tight" style={{ color: '#2c2418' }}>Super Admin</h1>
 
-      {/* Empresas table */}
       <section>
-        <p className="text-[13px] font-medium mb-3" style={{ color: '#a1a1aa' }}>Empresas ({empresas.length})</p>
-        <div className="rounded-xl overflow-hidden" style={{ border: '0.5px solid rgba(255,255,255,0.07)' }}>
+        <p className="mb-3 text-[13px] font-medium" style={{ color: '#5f513e' }}>Empresas ({empresas.length})</p>
+        <div className="overflow-hidden rounded-xl" style={tableFrame}>
           <table className="w-full text-[12px]">
             <thead>
-              <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
-                {['Nombre', 'Plan', 'Conv', 'Instancia WA', 'Número WA', ''].map(h => (
-                  <th key={h} className="px-3 py-2 text-left font-medium" style={{ color: '#71717a' }}>{h}</th>
+              <tr style={headRow}>
+                {['Nombre', 'Plan', 'Conv', 'Instancia WA', 'Numero WA', ''].map(h => (
+                  <th key={h} className="px-3 py-2 text-left font-medium" style={{ color: '#8a785d' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {empresas.map(e => (
-                <tr key={e.id} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.04)' }}>
-                  <td className="px-3 py-2" style={{ color: '#fafafa' }}>{e.nombre}</td>
-                  <td className="px-3 py-2 capitalize" style={{ color: '#a1a1aa' }}>{e.plan}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.conv_usadas}/{e.conv_limite}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.evolution_instance || '—'}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{e.whatsapp_num || '—'}</td>
+                <tr key={e.id} style={rowBorder}>
+                  <td className="px-3 py-2" style={{ color: '#2c2418' }}>{e.nombre}</td>
+                  <td className="px-3 py-2 capitalize" style={{ color: '#5f513e' }}>{e.plan}</td>
+                  <td className="px-3 py-2" style={{ color: '#5f513e' }}>{e.conv_usadas}/{e.conv_limite}</td>
+                  <td className="px-3 py-2" style={{ color: '#5f513e' }}>{e.evolution_instance || '-'}</td>
+                  <td className="px-3 py-2" style={{ color: '#5f513e' }}>{e.whatsapp_num || '-'}</td>
                   <td className="px-3 py-2">
                     <Link
                       href={`/admin/empresa/${e.id}`}
-                      className="text-[11px] px-2.5 py-1 rounded-md transition-colors hover:bg-blue-500/20"
-                      style={{ color: '#60a5fa', border: '0.5px solid rgba(96,165,250,0.2)' }}
+                      className="rounded-md px-2.5 py-1 text-[11px] transition-colors hover:bg-[#f3e3bf]"
+                      style={{ color: '#8a5d1a', border: '1px solid rgba(184,134,47,0.22)' }}
                     >
                       Configurar
                     </Link>
@@ -73,27 +82,26 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* Usuarios table */}
       <section>
-        <p className="text-[13px] font-medium mb-3" style={{ color: '#a1a1aa' }}>Usuarios ({usuarios.length})</p>
-        <div className="rounded-xl overflow-hidden" style={{ border: '0.5px solid rgba(255,255,255,0.07)' }}>
+        <p className="mb-3 text-[13px] font-medium" style={{ color: '#5f513e' }}>Usuarios ({usuarios.length})</p>
+        <div className="overflow-hidden rounded-xl" style={tableFrame}>
           <table className="w-full text-[12px]">
             <thead>
-              <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
+              <tr style={headRow}>
                 {['Email', 'Nombre', 'Rol', 'Empresa ID', 'Activo'].map(h => (
-                  <th key={h} className="px-3 py-2 text-left font-medium" style={{ color: '#71717a' }}>{h}</th>
+                  <th key={h} className="px-3 py-2 text-left font-medium" style={{ color: '#8a785d' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {usuarios.map(u => (
-                <tr key={u.id} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.04)' }}>
-                  <td className="px-3 py-2" style={{ color: '#fafafa' }}>{u.email}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{u.nombre}</td>
-                  <td className="px-3 py-2" style={{ color: '#a1a1aa' }}>{u.rol}</td>
-                  <td className="px-3 py-2 font-mono text-[10px]" style={{ color: '#52525b' }}>{u.empresa_id?.slice(0, 8) || '—'}</td>
+                <tr key={u.id} style={rowBorder}>
+                  <td className="px-3 py-2" style={{ color: '#2c2418' }}>{u.email}</td>
+                  <td className="px-3 py-2" style={{ color: '#5f513e' }}>{u.nombre}</td>
+                  <td className="px-3 py-2" style={{ color: '#5f513e' }}>{u.rol}</td>
+                  <td className="px-3 py-2 font-mono text-[10px]" style={{ color: '#8a785d' }}>{u.empresa_id?.slice(0, 8) || '-'}</td>
                   <td className="px-3 py-2">
-                    <span style={{ color: u.activo ? '#4ade80' : '#f87171' }}>{u.activo ? 'Sí' : 'No'}</span>
+                    <span style={{ color: u.activo ? '#3f744d' : '#c2413c' }}>{u.activo ? 'Si' : 'No'}</span>
                   </td>
                 </tr>
               ))}
@@ -102,10 +110,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* Forms */}
       <AdminForms empresas={empresas} />
-
-      {/* Guía paso a paso */}
       <AdminGuide />
     </div>
   );

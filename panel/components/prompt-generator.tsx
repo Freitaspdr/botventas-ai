@@ -206,15 +206,15 @@ function StepDot({ n, current, total }: { n: number; current: number; total: num
       <div
         className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium transition-all"
         style={{
-          background: done ? 'rgba(34,197,94,0.2)' : active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)',
-          color: done || active ? '#4ade80' : '#52525b',
-          border: active ? '1px solid rgba(34,197,94,0.4)' : '1px solid transparent',
+          background: done ? '#dfeedd' : active ? 'rgba(79,139,95,0.14)' : '#f4ead9',
+          color: done || active ? '#3f744d' : '#8a785d',
+          border: active ? '1px solid rgba(79,139,95,0.34)' : '1px solid transparent',
         }}
       >
         {done ? '✓' : n}
       </div>
       {n < total && (
-        <div className="w-8 h-px" style={{ background: done ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.06)' }} />
+        <div className="w-8 h-px" style={{ background: done ? 'rgba(79,139,95,0.34)' : 'rgba(218,197,160,0.62)' }} />
       )}
     </div>
   );
@@ -228,8 +228,8 @@ function CopyButton({ text }: { text: string }) {
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
       className="text-[10px] px-2 py-1 rounded transition-colors"
       style={{
-        background: copied ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)',
-        color: copied ? '#4ade80' : '#a1a1aa',
+        background: copied ? '#dfeedd' : '#f4ead9',
+        color: copied ? '#3f744d' : '#5f513e',
       }}
     >
       {copied ? '✓ Copiado' : 'Copiar'}
@@ -240,17 +240,18 @@ function CopyButton({ text }: { text: string }) {
 // ── input styles ──────────────────────────────────────────────────────────────
 
 const inp: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '0.5px solid rgba(255,255,255,0.08)',
+  background: 'rgba(255,253,248,0.96)',
+  border: '1px solid rgba(218,197,160,0.72)',
   borderRadius: 8,
   padding: '7px 11px',
   fontSize: 12,
-  color: '#fafafa',
+  color: '#2c2418',
   outline: 'none',
   width: '100%',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.78)',
 };
 
-const lbl: React.CSSProperties = { display: 'block', fontSize: 11, color: '#71717a', marginBottom: 3 };
+const lbl: React.CSSProperties = { display: 'block', fontSize: 11, color: '#8a785d', marginBottom: 3 };
 
 function CheckPill({
   checked, label, onChange,
@@ -261,9 +262,9 @@ function CheckPill({
       onClick={() => onChange(!checked)}
       className="px-2.5 py-1.5 rounded-lg text-[11px] transition-colors text-left"
       style={{
-        background: checked ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
-        color: checked ? '#4ade80' : '#a1a1aa',
-        border: checked ? '0.5px solid rgba(34,197,94,0.3)' : '0.5px solid rgba(255,255,255,0.06)',
+        background: checked ? '#dfeedd' : '#fffdfa',
+        color: checked ? '#3f744d' : '#5f513e',
+        border: checked ? '1px solid rgba(79,139,95,0.34)' : '1px solid rgba(218,197,160,0.62)',
       }}
     >
       {checked ? '✓ ' : ''}{label}
@@ -332,19 +333,19 @@ export function PromptGenerator({ onApply, onClose }: Props) {
   }
 
   const cardStyle: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.025)',
-    border: '0.5px solid rgba(255,255,255,0.07)',
+    background: '#fffdfa',
+    border: '1px solid rgba(218,197,160,0.72)',
     borderRadius: 12,
     padding: 16,
   };
 
   const previewStyle: React.CSSProperties = {
-    background: 'rgba(0,0,0,0.3)',
-    border: '0.5px solid rgba(255,255,255,0.06)',
+    background: '#fbf5ea',
+    border: '1px solid rgba(218,197,160,0.62)',
     borderRadius: 8,
     padding: '10px 12px',
     fontSize: 11,
-    color: '#a1a1aa',
+    color: '#2c2418',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
     lineHeight: 1.6,
@@ -358,14 +359,14 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* Header + progress */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[13px] font-medium" style={{ color: '#fafafa' }}>
+          <p className="text-[13px] font-medium" style={{ color: '#2c2418' }}>
             Asistente de configuración
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: '#71717a' }}>
+          <p className="text-[11px] mt-0.5" style={{ color: '#8a785d' }}>
             Responde las preguntas y genera los textos listos para el bot
           </p>
         </div>
-        <button onClick={onClose} className="text-[11px] px-2.5 py-1 rounded-lg hover:bg-white/[0.04]" style={{ color: '#71717a' }}>
+        <button onClick={onClose} className="text-[11px] px-2.5 py-1 rounded-lg hover:bg-[#f4ead9]" style={{ color: '#8a785d' }}>
           Cerrar ✕
         </button>
       </div>
@@ -380,7 +381,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 1: Negocio ── */}
       {step === 1 && (
         <div style={cardStyle} className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Paso 1 · Tu negocio</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Paso 1 · Tu negocio</p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -435,7 +436,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 2: Objetivo ── */}
       {step === 2 && (
         <div style={cardStyle} className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Paso 2 · Objetivo del bot</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Paso 2 · Objetivo del bot</p>
 
           <div>
             <label style={{ ...lbl, marginBottom: 6 }}>¿Qué debe hacer el bot? (selecciona todos los que apliquen)</label>
@@ -453,7 +454,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
           <div>
             <label style={lbl}>¿Qué dato debe pedir siempre antes de dar precios?</label>
             <input style={inp} value={form.pre_precio} onChange={e => setF('pre_precio', e.target.value)} placeholder="El año y modelo del coche del cliente" />
-            <p className="mt-1 text-[10px]" style={{ color: '#52525b' }}>Dejar vacío si el bot puede dar precios directamente.</p>
+            <p className="mt-1 text-[10px]" style={{ color: '#8a785d' }}>Dejar vacío si el bot puede dar precios directamente.</p>
           </div>
 
           <div>
@@ -474,15 +475,15 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 3: Catálogo ── */}
       {step === 3 && (
         <div style={cardStyle} className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Paso 3 · Catálogo de servicios</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Paso 3 · Catálogo de servicios</p>
 
           <div className="flex flex-col gap-3">
             {form.servicios.map((s, i) => (
-              <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.05)' }}>
+              <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: '#fbf5ea', border: '1px solid rgba(218,197,160,0.62)' }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: '#71717a' }}>Servicio {i + 1}</span>
+                  <span className="text-[11px]" style={{ color: '#8a785d' }}>Servicio {i + 1}</span>
                   {form.servicios.length > 1 && (
-                    <button type="button" onClick={() => removeServicio(i)} className="text-[10px]" style={{ color: '#52525b' }}>✕ Eliminar</button>
+                    <button type="button" onClick={() => removeServicio(i)} className="text-[10px]" style={{ color: '#8a785d' }}>✕ Eliminar</button>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -507,7 +508,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
             type="button"
             onClick={addServicio}
             className="text-[12px] py-2 rounded-lg transition-colors"
-            style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', border: '0.5px dashed rgba(255,255,255,0.1)' }}
+            style={{ background: '#fffdfa', color: '#5f513e', border: '1px dashed rgba(218,197,160,0.86)' }}
           >
             + Añadir servicio
           </button>
@@ -517,7 +518,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 4: Horarios ── */}
       {step === 4 && (
         <div style={cardStyle} className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Paso 4 · Horarios de atención</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Paso 4 · Horarios de atención</p>
 
           <div className="flex flex-col gap-2">
             {DIAS.map(dia => {
@@ -529,9 +530,9 @@ export function PromptGenerator({ onApply, onClose }: Props) {
                     onClick={() => updateHorario(dia, 'activo', !h.activo)}
                     className="w-16 text-[11px] py-1 rounded-lg transition-colors flex-shrink-0 text-center"
                     style={{
-                      background: h.activo ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
-                      color: h.activo ? '#4ade80' : '#52525b',
-                      border: h.activo ? '0.5px solid rgba(34,197,94,0.2)' : '0.5px solid rgba(255,255,255,0.06)',
+                      background: h.activo ? '#dfeedd' : '#fffdfa',
+                      color: h.activo ? '#3f744d' : '#8a785d',
+                      border: h.activo ? '1px solid rgba(79,139,95,0.28)' : '1px solid rgba(218,197,160,0.62)',
                     }}
                   >
                     {dia.slice(0, 3)}
@@ -544,7 +545,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
                         value={h.desde}
                         onChange={e => updateHorario(dia, 'desde', e.target.value)}
                       />
-                      <span style={{ color: '#52525b', fontSize: 11 }}>–</span>
+                      <span style={{ color: '#8a785d', fontSize: 11 }}>–</span>
                       <input
                         type="time"
                         style={{ ...inp, width: 110, padding: '5px 8px' }}
@@ -553,7 +554,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
                       />
                     </div>
                   ) : (
-                    <span className="text-[11px]" style={{ color: '#52525b' }}>Cerrado</span>
+                    <span className="text-[11px]" style={{ color: '#8a785d' }}>Cerrado</span>
                   )}
                 </div>
               );
@@ -570,7 +571,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 5: Extra ── */}
       {step === 5 && (
         <div style={cardStyle} className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Paso 5 · Instrucciones especiales</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Paso 5 · Instrucciones especiales</p>
 
           <div>
             <label style={{ ...lbl, marginBottom: 6 }}>Métodos de pago aceptados</label>
@@ -618,7 +619,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
       {/* ── STEP 6: Resultado ── */}
       {step === 6 && generated && (
         <div className="flex flex-col gap-4">
-          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#71717a' }}>Resultado generado</p>
+          <p className="text-[12px] uppercase tracking-wider" style={{ color: '#8a785d' }}>Resultado generado</p>
 
           {([
             { key: 'bot_objetivo',  label: 'Objetivo del bot' },
@@ -628,7 +629,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
           ] as { key: keyof Generated; label: string }[]).map(({ key, label }) => (
             <div key={key} style={cardStyle} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium" style={{ color: '#a1a1aa' }}>{label}</p>
+                <p className="text-[11px] font-medium" style={{ color: '#5f513e' }}>{label}</p>
                 <CopyButton text={generated[key]} />
               </div>
               <pre style={previewStyle}>{generated[key] || '(vacío)'}</pre>
@@ -639,15 +640,15 @@ export function PromptGenerator({ onApply, onClose }: Props) {
             type="button"
             onClick={() => onApply(generated)}
             className="py-2.5 rounded-[10px] text-[13px] font-medium transition-all hover:opacity-90"
-            style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '0.5px solid rgba(34,197,94,0.2)' }}
+            style={{ background: '#dfeedd', color: '#3f744d', border: '1px solid rgba(79,139,95,0.28)' }}
           >
             Aplicar todo a la configuración
           </button>
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="text-[12px] py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors"
-            style={{ color: '#71717a' }}
+            className="text-[12px] py-1.5 rounded-lg hover:bg-[#f4ead9] transition-colors"
+            style={{ color: '#8a785d' }}
           >
             ← Volver a editar
           </button>
@@ -662,7 +663,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
             onClick={() => setStep(s => Math.max(1, s - 1))}
             disabled={step === 1}
             className="text-[12px] px-4 py-2 rounded-lg transition-colors disabled:opacity-30"
-            style={{ background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
+            style={{ background: '#f4ead9', color: '#5f513e' }}
           >
             ← Anterior
           </button>
@@ -673,7 +674,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
               onClick={() => setStep(s => s + 1)}
               disabled={step === 1 && (!form.negocio_nombre || !form.negocio_tipo)}
               className="text-[12px] px-4 py-2 rounded-lg transition-colors disabled:opacity-30"
-              style={{ background: 'rgba(255,255,255,0.06)', color: '#fafafa' }}
+              style={{ background: 'linear-gradient(135deg, #d7ac55, #9b6a24)', color: '#fffaf0' }}
             >
               Siguiente →
             </button>
@@ -682,7 +683,7 @@ export function PromptGenerator({ onApply, onClose }: Props) {
               type="button"
               onClick={handleGenerate}
               className="text-[12px] px-5 py-2 rounded-lg font-medium transition-all hover:opacity-90"
-              style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80' }}
+              style={{ background: '#dfeedd', color: '#3f744d' }}
             >
               Generar prompts ✨
             </button>
