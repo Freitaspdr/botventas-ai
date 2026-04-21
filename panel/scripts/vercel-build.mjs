@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const cwd = process.cwd();
@@ -51,6 +51,8 @@ const candidates = [
 const isVercelBuild = cwd.replaceAll('\\', '/').startsWith('/vercel/');
 const cwdNextDir = join(cwd, '.next');
 const vercelRootNextDir = join(dirname(cwd), '.next');
+const cwdNodeModulesDir = join(cwd, 'node_modules');
+const vercelRootNodeModulesDir = join(dirname(cwd), 'node_modules');
 
 if (isVercelBuild) {
   candidates.push({
@@ -81,6 +83,14 @@ function syncVercelRootBuildOutput() {
   syncRoutesManifest();
 }
 
+function syncVercelRootNodeModules() {
+  if (!isVercelBuild || !existsSync(cwdNodeModulesDir) || existsSync(vercelRootNodeModulesDir)) {
+    return;
+  }
+
+  symlinkSync(cwdNodeModulesDir, vercelRootNodeModulesDir, 'dir');
+}
+
 const childEnv = { ...process.env };
 delete childEnv.NEXT_ENABLE_ADAPTER;
 
@@ -98,6 +108,7 @@ child.on('exit', (code, signal) => {
   syncRoutesManifest();
   if ((code ?? 1) === 0) {
     syncVercelRootBuildOutput();
+    syncVercelRootNodeModules();
   }
   console.log(`Ensured Vercel routes manifest at ${candidates.map(({ target }) => target).join(', ')}`);
 
