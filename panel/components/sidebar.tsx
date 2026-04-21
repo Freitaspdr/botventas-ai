@@ -99,13 +99,14 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
 
   return (
     <aside
-      className={`fixed bottom-5 left-4 top-[96px] z-30 flex-col justify-between rounded-[28px] p-3 transition-all duration-200 md:top-[118px] ${open ? 'flex' : 'hidden md:flex'}`}
+      className={`sidebar-scroll fixed bottom-5 left-4 top-[96px] z-30 flex-col justify-between overflow-y-auto overflow-x-hidden overscroll-contain rounded-[28px] p-3 transition-all duration-200 md:top-[118px] ${open ? 'flex' : 'hidden md:flex'}`}
       style={{
         width: open ? 270 : 78,
         background: 'rgba(255,250,242,0.92)',
         border: '1px solid rgba(218,197,160,0.72)',
         boxShadow: '0 22px 54px rgba(116,82,28,0.14), inset 0 1px 0 rgba(255,255,255,0.86)',
         backdropFilter: 'blur(18px)',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <div className="flex flex-col gap-4">
