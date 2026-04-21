@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build --webpack",
+    "postbuild": "node scripts/ensure-vercel-routes-manifest.mjs",
     "start": "next start",
     "lint": "eslint"
   },
